@@ -26,6 +26,8 @@ import { MissionChat } from '@/components/mission-chat';
 import { CyclingBadge } from '@/components/cycling-badge';
 import { LoadingScreen } from '@/components/loading-screen';
 import { Starfield } from '@/components/starfield';
+import { FeatureCard } from '@/components/features/feature-card';
+import { MockExam, MockAnalytics, MockPlanner, MockEssay, MockItemSet } from '@/components/features/mockups';
 
 const features = [
   {
@@ -408,38 +410,86 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {features.map((feature, index) => {
-                  const Icon = feature.icon;
-                  return (
-                    <motion.div
-                      key={feature.title}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.1 }}
-                      className={feature.className}
-                    >
-                      <div className="group h-full p-8 rounded-3xl bg-slate-900/50 border border-white/5 hover:border-indigo-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-50 group-hover:opacity-100 transition-opacity">
-                          <div className={`w-32 h-32 rounded-full ${feature.bg.replace('/10', '/5')} blur-3xl`} />
-                        </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[320px]">
+                {/* Visual Bento Grid */}
 
-                        <div className={`inline-flex p-4 rounded-2xl ${feature.bg} mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                          <Icon className={`h-8 w-8 ${feature.color}`} />
+                {/* 1. Practice Questions (Mock Exam) */}
+                <FeatureCard
+                  title="MCQ Practice"
+                  description="Thousands of practice questions organized by topic with detailed explanations."
+                  className="md:col-span-2"
+                  delay={0}
+                >
+                  <MockExam />
+                </FeatureCard>
+
+                {/* 2. Smart Analytics */}
+                <FeatureCard
+                  title="Smart Analytics"
+                  description="Track your progress and identify weak areas instantly."
+                  className="md:col-span-1"
+                  delay={0.1}
+                >
+                  <MockAnalytics />
+                </FeatureCard>
+
+                {/* 3. Item Set Simulator */}
+                <FeatureCard
+                  title="Item Set Simulator"
+                  description="Practice Level II style vignettes with real exam-like conditions."
+                  className="md:col-span-1 md:row-span-2"
+                  delay={0.2}
+                >
+                  <MockItemSet />
+                </FeatureCard>
+
+                {/* 4. Study Planner */}
+                <FeatureCard
+                  title="Dynamic Study Planner"
+                  description="3-month structured roadmap tailored to your exam date."
+                  className="md:col-span-2"
+                  delay={0.3}
+                >
+                  <MockPlanner />
+                </FeatureCard>
+
+                {/* 5. AI Essay Grading */}
+                <FeatureCard
+                  title="Essay Grading"
+                  description="AI-powered scoring for Level III constructed responses."
+                  className="md:col-span-1"
+                  delay={0.4}
+                >
+                  <MockEssay />
+                </FeatureCard>
+
+                {/* 6. Simple Text Card (or repurpose) */}
+                <FeatureCard
+                  title="AI Explanations"
+                  description="Get instant, personalized explanations for any concept."
+                  className="md:col-span-1"
+                  delay={0.5}
+                >
+                  {/* Using a smaller version of MissionChat essentially */}
+                  <div className="absolute inset-0 flex items-center justify-center p-6">
+                    <div className="bg-slate-900 border border-indigo-500/30 rounded-2xl p-4 w-full max-w-[250px] shadow-lg">
+                      <div className="flex gap-3 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                          <Sparkles className="w-4 h-4 text-indigo-400" />
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-indigo-400 transition-colors">
-                          {feature.title}
-                        </h3>
-                        <p className="text-slate-400 leading-relaxed">
-                          {feature.description}
-                        </p>
+                        <div className="text-xs text-slate-300">
+                          Can you explain <span className="text-indigo-400">convexity</span>?
+                        </div>
                       </div>
-                    </motion.div>
-                  );
-                })}
+                      <div className="bg-slate-800/50 rounded-xl p-3 text-xs text-slate-400 leading-relaxed border border-white/5">
+                        Convexity measures the curvature in the relationship between bond prices and yields...
+                      </div>
+                    </div>
+                  </div>
+                </FeatureCard>
               </div>
             </div>
+
           </section>
 
           {/* Levels Section */}
@@ -521,8 +571,8 @@ export default function LandingPage() {
                     viewport={{ once: true }}
                     transition={{ delay: index * 0.1 }}
                     className={`relative flex flex-col p-8 rounded-[2.5rem] ${plan.highlight
-                        ? 'bg-gradient-to-br from-indigo-900/40 to-slate-900/40 border-indigo-500/30'
-                        : 'bg-slate-900/40 border-white/5'
+                      ? 'bg-gradient-to-br from-indigo-900/40 to-slate-900/40 border-indigo-500/30'
+                      : 'bg-slate-900/40 border-white/5'
                       } border backdrop-blur-sm transition-all duration-300 hover:scale-[1.02]`}
                   >
                     {plan.highlight && (
@@ -554,8 +604,8 @@ export default function LandingPage() {
                     <Link href="/dashboard" className="block w-full">
                       <Button
                         className={`w-full h-12 rounded-xl font-bold transition-all ${plan.highlight
-                            ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-600/20'
-                            : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
+                          ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-600/20'
+                          : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
                           }`}
                       >
                         {plan.cta}
@@ -627,7 +677,8 @@ export default function LandingPage() {
             </div>
           </footer>
         </motion.div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
