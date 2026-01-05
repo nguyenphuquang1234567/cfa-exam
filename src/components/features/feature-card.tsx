@@ -8,11 +8,12 @@ interface FeatureCardProps {
     description: string;
     children: ReactNode;
     icon?: LucideIcon;
+    iconColor?: string; // Tailwind class for icon color
     className?: string; // For grid column/row spans
     delay?: number;
 }
 
-export function FeatureCard({ title, description, children, icon: Icon, className = '', delay = 0 }: FeatureCardProps) {
+export function FeatureCard({ title, description, children, icon: Icon, iconColor = 'text-indigo-400', className = '', delay = 0 }: FeatureCardProps) {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -37,7 +38,7 @@ export function FeatureCard({ title, description, children, icon: Icon, classNam
                 {/* Text Details */}
                 <div className="p-8 relative z-10 bg-slate-900/20 backdrop-blur-sm sm:bg-transparent sm:backdrop-blur-none">
                     <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors flex items-center gap-3">
-                        {Icon && <Icon className="w-6 h-6 text-indigo-400" />}
+                        {Icon && <Icon className={`w-6 h-6 ${iconColor}`} />}
                         {title}
                     </h3>
                     <p className="text-slate-400 leading-relaxed text-sm">

@@ -418,6 +418,7 @@ export default function LandingPage() {
                   title="MCQ Practice"
                   description="Thousands of practice questions organized by topic with detailed explanations."
                   icon={BookOpen}
+                  iconColor="text-indigo-400"
                   className="md:col-span-2"
                   delay={0}
                 >
@@ -429,6 +430,7 @@ export default function LandingPage() {
                   title="Smart Analytics"
                   description="Track your progress and identify weak areas instantly."
                   icon={BarChart3}
+                  iconColor="text-emerald-400"
                   className="md:col-span-1"
                   delay={0.1}
                 >
@@ -440,6 +442,7 @@ export default function LandingPage() {
                   title="Item Set Simulator"
                   description="Practice Level II style vignettes with real exam-like conditions."
                   icon={FileText}
+                  iconColor="text-purple-400"
                   className="md:col-span-1 md:row-span-2"
                   delay={0.2}
                 >
@@ -451,6 +454,7 @@ export default function LandingPage() {
                   title="Dynamic Study Planner"
                   description="3-month structured roadmap tailored to your exam date."
                   icon={Calendar}
+                  iconColor="text-rose-400"
                   className="md:col-span-2"
                   delay={0.3}
                 >
@@ -462,6 +466,7 @@ export default function LandingPage() {
                   title="Essay Grading"
                   description="AI-powered scoring for Level III constructed responses."
                   icon={GraduationCap}
+                  iconColor="text-amber-400"
                   className="md:col-span-1"
                   delay={0.4}
                 >
@@ -473,6 +478,7 @@ export default function LandingPage() {
                   title="AI Explanations"
                   description="Get instant, personalized explanations for any concept."
                   icon={Sparkles}
+                  iconColor="text-cyan-400"
                   className="md:col-span-1"
                   delay={0.5}
                 >
