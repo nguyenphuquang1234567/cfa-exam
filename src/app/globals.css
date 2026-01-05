@@ -86,3 +86,13 @@
   --tw-prose-headings: #f8fafc;
   --tw-prose-links: #818cf8;
 }
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+  }
+  
+  .glass-card {
+    @apply bg-slate-900/40 backdrop-blur-md border border-slate-800/50 hover:border-slate-700/50 transition-all duration-300;
+  }
+}
