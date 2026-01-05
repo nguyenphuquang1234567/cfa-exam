@@ -28,41 +28,47 @@ const features = [
     description: 'Thousands of practice questions organized by topic with detailed explanations.',
     color: 'text-indigo-400',
     bg: 'bg-indigo-500/10',
+    className: 'md:col-span-2',
   },
   {
     icon: FileText,
     title: 'Item Set Simulator',
-    description: 'Practice Level II style vignettes with real exam-like conditions.',
+    description: 'Practice Level II style vignettes with real exam-like conditions. Master the art of extracting relevant data from complex case studies.',
     color: 'text-purple-400',
     bg: 'bg-purple-500/10',
+    className: 'md:col-span-1 md:row-span-2',
   },
   {
     icon: GraduationCap,
     title: 'Essay Grading',
-    description: 'AI-powered scoring for Level III constructed responses with detailed feedback.',
+    description: 'AI-powered scoring for Level III constructed responses.',
     color: 'text-amber-400',
     bg: 'bg-amber-500/10',
+    className: 'md:col-span-1',
   },
   {
     icon: BarChart3,
     title: 'Smart Analytics',
-    description: 'Track your progress and identify weak areas with performance insights.',
+    description: 'Track your progress and identify weak areas.',
     color: 'text-emerald-400',
     bg: 'bg-emerald-500/10',
+    className: 'md:col-span-1',
   },
   {
     icon: Calendar,
     title: 'Study Planner',
-    description: '3-month structured roadmap tailored to your exam date.',
+    description: '3-month structured roadmap tailored to your exam date. Dynamic adjustments based on your pace.',
     color: 'text-rose-400',
     bg: 'bg-rose-500/10',
+    className: 'md:col-span-2',
   },
   {
     icon: Sparkles,
     title: 'AI Explanations',
-    description: 'Get instant, personalized explanations for every question.',
+    description: 'Get instant, personalized explanations.',
     color: 'text-cyan-400',
     bg: 'bg-cyan-500/10',
+    className: 'md:col-span-1',
   },
 ];
 
@@ -302,7 +308,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
@@ -312,8 +318,13 @@ export default function LandingPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
+                  className={feature.className}
                 >
-                  <div className="group h-full p-8 rounded-3xl bg-slate-900/50 border border-white/5 hover:border-indigo-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1">
+                  <div className="group h-full p-8 rounded-3xl bg-slate-900/50 border border-white/5 hover:border-indigo-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-50 group-hover:opacity-100 transition-opacity">
+                      <div className={`w-32 h-32 rounded-full ${feature.bg.replace('/10', '/5')} blur-3xl`} />
+                    </div>
+
                     <div className={`inline-flex p-4 rounded-2xl ${feature.bg} mb-6 group-hover:scale-110 transition-transform duration-300`}>
                       <Icon className={`h-8 w-8 ${feature.color}`} />
                     </div>
