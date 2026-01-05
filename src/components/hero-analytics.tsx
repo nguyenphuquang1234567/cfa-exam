@@ -144,11 +144,6 @@ export function HeroAnalytics() {
                     <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-white transition-all transform group-hover:translate-x-1" />
                 </div>
 
-                <div className="px-1">
-                    <p className="text-[9px] text-slate-500 leading-tight italic">
-                        * Pass rates remain challenging; average study time exceeds 300 hours. Our targeted practice and real-time analytics are designed to close this gap.
-                    </p>
-                </div>
             </div>
         </div>
     );
