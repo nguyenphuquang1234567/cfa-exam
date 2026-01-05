@@ -129,7 +129,7 @@ export default function LandingPage() {
               className="inline-flex items-center justify-center p-1 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm"
             >
               <span className="bg-indigo-500/20 text-indigo-300 text-xs font-semibold px-3 py-1 rounded-full border border-indigo-500/30 mr-3">NEW</span>
-              <span className="text-slate-300 text-sm pr-3">AI-Powered Item Set Simulator Available Now <ChevronRight className="inline h-4 w-4 ml-1" /></span>
+              <span className="text-slate-300 text-sm pr-3">AI-Powered CFA Preparation <ChevronRight className="inline h-4 w-4 ml-1" /></span>
             </motion.div>
 
             <motion.h1
