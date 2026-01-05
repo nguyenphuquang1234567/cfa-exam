@@ -47,7 +47,7 @@ export function MissionChat() {
 
             // Move to scrollbar area
             await wait(800);
-            setCursorPos({ x: '92%', y: '55%', opacity: 1 });
+            setCursorPos({ x: '98%', y: '55%', opacity: 1 });
 
             // 3. Scroll and Approach Explanation Reveal
             await wait(800);
@@ -62,7 +62,7 @@ export function MissionChat() {
 
             // Move to scrollbar area again
             await wait(800);
-            setCursorPos({ x: '92%', y: '75%', opacity: 1 });
+            setCursorPos({ x: '98%', y: '75%', opacity: 1 });
 
             // 4. Scroll to see explanation
             await wait(800);
