@@ -91,7 +91,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, x: 0 }}
             className="text-4xl font-extrabold text-white tracking-tight"
           >
-            Hello, Gamer 👋
+            Welcome Back 👋
           </motion.h1>
           <p className="text-slate-400 mt-2 text-lg">
             It&apos;s <span className="text-indigo-400 font-semibold">87 days</span> until your Feb 2025 exam
@@ -250,8 +250,8 @@ export default function DashboardPage() {
                     animate={{ width: `${topic.accuracy}%` }}
                     transition={{ duration: 1, delay: 0.8 + index * 0.1 }}
                     className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${topic.accuracy >= 60
-                        ? 'from-amber-500 to-orange-500'
-                        : 'from-red-500 to-rose-500'
+                      ? 'from-amber-500 to-orange-500'
+                      : 'from-red-500 to-rose-500'
                       }`}
                   />
                 </div>
@@ -306,19 +306,19 @@ export default function DashboardPage() {
                       animate={{ width: `${activity.score}%` }}
                       transition={{ duration: 1, delay: 1 + index * 0.1 }}
                       className={`h-full rounded-full ${activity.score >= 70
-                          ? 'bg-emerald-500'
-                          : activity.score >= 50
-                            ? 'bg-amber-500'
-                            : 'bg-red-500'
+                        ? 'bg-emerald-500'
+                        : activity.score >= 50
+                          ? 'bg-amber-500'
+                          : 'bg-red-500'
                         }`}
                     />
                   </div>
                   <span
                     className={`text-sm font-black font-mono ${activity.score >= 70
-                        ? 'text-emerald-400'
-                        : activity.score >= 50
-                          ? 'text-amber-400'
-                          : 'text-red-400'
+                      ? 'text-emerald-400'
+                      : activity.score >= 50
+                        ? 'text-amber-400'
+                        : 'text-red-400'
                       }`}
                   >
                     {activity.score}%
