@@ -42,8 +42,10 @@ export function Navbar() {
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-white">CFA Practice</h1>
-              <p className="text-xs text-slate-400">Master Your Exam</p>
+              <h1 className="text-xl font-bold text-white">
+                CFA <span className="text-indigo-400">Prep</span> AI
+              </h1>
+              <p className="text-xs text-slate-400 font-medium">Master Your Exam</p>
             </div>
           </Link>
 
@@ -52,7 +54,7 @@ export function Navbar() {
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               const Icon = item.icon;
-              
+
               return (
                 <Link key={item.href} href={item.href}>
                   <motion.div
@@ -78,11 +80,13 @@ export function Navbar() {
             <Badge variant="level1" className="hidden sm:flex">
               Level I
             </Badge>
-            
-            <Button variant="outline" size="sm" className="hidden sm:flex gap-2">
-              <Crown className="h-4 w-4 text-amber-400" />
-              Upgrade
-            </Button>
+
+            <Link href="/pricing">
+              <Button variant="outline" size="sm" className="hidden sm:flex gap-2 border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 text-slate-200">
+                <Crown className="h-4 w-4 text-amber-400" />
+                Upgrade
+              </Button>
+            </Link>
 
             <button className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 hover:bg-slate-700 transition-colors">
               <User className="h-5 w-5 text-slate-300" />
@@ -115,7 +119,7 @@ export function Navbar() {
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
-              
+
               return (
                 <Link
                   key={item.href}
@@ -136,7 +140,7 @@ export function Navbar() {
                 </Link>
               );
             })}
-            
+
             <div className="pt-4 border-t border-slate-800 mt-4">
               <button className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 w-full">
                 <LogOut className="h-5 w-5" />
