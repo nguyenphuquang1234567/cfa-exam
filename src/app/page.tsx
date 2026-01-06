@@ -196,7 +196,7 @@ export default function LandingPage() {
                     transition={{ delay: 0.6, duration: 0.5 }}
                     className="text-lg font-bold text-white tracking-tight"
                   >
-                    CFA<span className="text-indigo-400">Prep</span> AI
+                    CFA <span className="text-indigo-400">Prep</span> AI
                   </motion.span>
                 </div>
 
