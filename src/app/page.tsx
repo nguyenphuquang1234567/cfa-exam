@@ -24,6 +24,7 @@ import { HeroAnalytics } from '@/components/hero-analytics';
 import { MissionChat } from '@/components/mission-chat';
 import { CyclingBadge } from '@/components/cycling-badge';
 import { LoadingScreen } from '@/components/loading-screen';
+import { ThreeDCard } from '@/components/three-d-card';
 import { Starfield } from '@/components/starfield';
 import { FeatureCard } from '@/components/features/feature-card';
 import { MockExam, MockAnalytics, MockPlanner, MockEssay, MockItemSet } from '@/components/features/mockups';
@@ -235,19 +236,27 @@ export default function LandingPage() {
 
               {/* Floating Hero Image */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                className="relative mx-auto max-w-5xl"
+                initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="relative mx-auto max-w-5xl perspective-[2000px] group"
               >
-                <div className="relative rounded-3xl border border-white/10 bg-slate-900/50 backdrop-blur-sm p-3 shadow-2xl animate-float lg:aspect-[16/10]">
-                  <div className="rounded-2xl overflow-hidden bg-slate-950 h-full relative">
-                    <HeroAnalytics />
-                  </div>
-                </div>
+                {/* Glowing background blob */}
+                <div className="absolute -inset-10 bg-indigo-500/20 blur-[60px] -z-10 rounded-full opacity-40 group-hover:opacity-60 transition-opacity duration-700" />
 
-                {/* Background Glow behind image */}
-                <div className="absolute -inset-4 bg-indigo-500/20 blur-3xl -z-10 rounded-[3rem]" />
+                {/* Floating 3D Dashboard Mockup */}
+                <div className="relative w-full aspect-[16/10] lg:aspect-[16/9] flex items-center justify-center">
+                  <ThreeDCard
+                    perspective={2000}
+                    rotateX={15}
+                    rotateY={20}
+                    rotateZ={-5}
+                    scale={0.95}
+                    className="w-full h-full"
+                  >
+                    <HeroAnalytics />
+                  </ThreeDCard>
+                </div>
               </motion.div>
 
               {/* Proof Highlights Row */}
