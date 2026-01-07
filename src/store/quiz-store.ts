@@ -20,20 +20,20 @@ interface QuizState {
   isActive: boolean;
   mode: 'PRACTICE' | 'TIMED' | 'EXAM';
   timeLimit: number | null;
-  
+
   // Questions
   questions: QuizQuestion[];
   currentIndex: number;
   answers: Record<string, string>;
-  
+
   // Timer
   timeRemaining: number;
   isTimerRunning: boolean;
-  
+
   // Results
   isCompleted: boolean;
   showExplanation: boolean;
-  
+
   // Actions
   startQuiz: (questions: QuizQuestion[], mode: 'PRACTICE' | 'TIMED' | 'EXAM', timeLimit?: number) => void;
   setAnswer: (questionId: string, answer: string) => void;
@@ -61,16 +61,17 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   showExplanation: false,
 
   startQuiz: (questions, mode, timeLimit) => {
+    const upperMode = mode.toUpperCase() as 'PRACTICE' | 'TIMED' | 'EXAM';
     const time = timeLimit ? timeLimit * 60 : questions.length * 90; // 90 seconds per question default
     set({
       isActive: true,
-      mode,
+      mode: upperMode,
       timeLimit: timeLimit || null,
       questions,
       currentIndex: 0,
       answers: {},
-      timeRemaining: mode === 'PRACTICE' ? 0 : time,
-      isTimerRunning: mode !== 'PRACTICE',
+      timeRemaining: upperMode === 'PRACTICE' ? 0 : time,
+      isTimerRunning: upperMode !== 'PRACTICE',
       isCompleted: false,
       showExplanation: false,
     });
