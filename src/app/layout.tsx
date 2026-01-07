@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   keywords: ['CFA', 'exam prep', 'finance', 'Level I', 'Level II', 'Level III', 'practice questions'],
 };
 
+import { AuthProvider } from '@/context/auth-context';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,7 +29,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${outfit.variable} ${jetbrainsMono.variable} font-sans`}>
-        <SmoothScroll>{children}</SmoothScroll>
+        <AuthProvider>
+          <SmoothScroll>{children}</SmoothScroll>
+        </AuthProvider>
       </body>
     </html>
   );

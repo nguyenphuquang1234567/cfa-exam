@@ -31,6 +31,9 @@ import { FeatureCard } from '@/components/features/feature-card';
 import { MockExam, MockAnalytics, MockPlanner, MockEssay, MockItemSet } from '@/components/features/mockups';
 import { PricingSection } from '@/components/pricing-section';
 
+import { useAuth } from '@/context/auth-context';
+import { logout } from '@/lib/auth-utils';
+
 const features = [
   {
     icon: BookOpen,
@@ -96,10 +99,11 @@ const levels = [
 ];
 
 
-type LoadingState = 'initial' | 'exiting' | 'complete';
+type LoadingState = 'loading' | 'exiting' | 'complete';
 
 export default function LandingPage() {
-  const [loadingState, setLoadingState] = useState<LoadingState>('initial');
+  const [loadingState, setLoadingState] = useState<LoadingState>('loading');
+  const { user } = useAuth();
 
   useEffect(() => {
     const exitTimer = setTimeout(() => setLoadingState('exiting'), 2500);
@@ -164,14 +168,32 @@ export default function LandingPage() {
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <Link href="/dashboard">
-                    <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/5">Sign In</Button>
-                  </Link>
-                  <Link href="/dashboard">
-                    <Button className="bg-white text-slate-900 hover:bg-slate-100 font-semibold shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-transform hover:scale-[1.02]">
-                      Get Started
-                    </Button>
-                  </Link>
+                  {user ? (
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm text-slate-300 hidden sm:inline-block">Hi, {user.displayName?.split(' ')[0]}</span>
+                      <Link href="/dashboard">
+                        <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/5">Dashboard</Button>
+                      </Link>
+                      <Button
+                        onClick={() => logout()}
+                        variant="ghost"
+                        className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                      >
+                        Logout
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Link href="/login">
+                        <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/5">Sign In</Button>
+                      </Link>
+                      <Link href="/dashboard">
+                        <Button className="bg-white text-slate-900 hover:bg-slate-100 font-semibold shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-transform hover:scale-[1.02]">
+                          Get Started
+                        </Button>
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
