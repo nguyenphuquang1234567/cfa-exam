@@ -96,6 +96,8 @@ model Question {
   createdAt   DateTime @default(now())
 
   quizQuestions QuizQuestion[]
+
+  @@index([topicId, difficulty])
 }
 
 enum Difficulty {

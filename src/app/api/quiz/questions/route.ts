@@ -36,12 +36,16 @@ export async function GET(request: Request) {
             }
         });
 
-        // Shuffle the results in memory
-        const shuffled = allQuestions
-            .sort(() => Math.random() - 0.5)
-            .slice(0, count);
+        // Shuffle the results in memory using Fisher-Yates algorithm for O(M) complexity
+        const shuffled = [...allQuestions];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
 
-        return NextResponse.json(shuffled);
+        const selected = shuffled.slice(0, count);
+
+        return NextResponse.json(selected);
     } catch (error) {
         console.error('Failed to fetch questions:', error);
         return NextResponse.json({ error: 'Failed to fetch questions' }, { status: 500 });
