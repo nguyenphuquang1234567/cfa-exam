@@ -23,18 +23,25 @@ export async function GET(request: Request) {
             where.difficulty = difficulty.toUpperCase();
         }
 
-        const questions = await prisma.$queryRaw<any[]>`
-            SELECT q.*, 
-                   json_build_object('id', t.id, 'name', t.name) as topic
-            FROM "Question" q
-            LEFT JOIN "Topic" t ON q."topicId" = t.id
-            WHERE (${where.topic ? `t.slug IN (${where.topic.slug.in.map((s: string) => `'${s}'`).join(',')})` : '1=1'})
-            AND (${where.difficulty ? `q.difficulty = '${where.difficulty}'` : '1=1'})
-            ORDER BY RANDOM()
-            LIMIT ${count}
-        `;
+        // Get all matching questions first
+        const allQuestions = await prisma.question.findMany({
+            where,
+            include: {
+                topic: {
+                    select: {
+                        id: true,
+                        name: true,
+                    }
+                }
+            }
+        });
 
-        return NextResponse.json(questions);
+        // Shuffle the results in memory
+        const shuffled = allQuestions
+            .sort(() => Math.random() - 0.5)
+            .slice(0, count);
+
+        return NextResponse.json(shuffled);
     } catch (error) {
         console.error('Failed to fetch questions:', error);
         return NextResponse.json({ error: 'Failed to fetch questions' }, { status: 500 });

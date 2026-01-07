@@ -283,8 +283,8 @@ export default function QuizPage() {
                 variant="outline"
                 size="lg"
                 onClick={() => {
-                  setSelectedTopics(topics.map((t) => t.id));
-                  setSelectedMode('practice');
+                  const allTopicIds = topics.map((t) => t.id);
+                  window.location.href = `/quiz/session?topics=${allTopicIds.join(',')}&mode=${selectedMode}&count=${questionCount}&difficulty=${difficulty}`;
                 }}
               >
                 <Shuffle className="h-5 w-5 mr-2" />
