@@ -8,6 +8,7 @@ export interface QuizQuestion {
   optionC: string;
   correctAnswer: string;
   explanation: string;
+  difficulty: string;
   formula?: string | null;
   topic: {
     id: string;

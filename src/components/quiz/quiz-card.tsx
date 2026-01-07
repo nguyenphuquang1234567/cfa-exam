@@ -47,10 +47,23 @@ export function QuizCard({
         {/* Question Header */}
         <div className="bg-gradient-to-r from-indigo-500/5 to-violet-500/5 border-b border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <Badge variant="default">
-              Question {questionNumber} of {totalQuestions}
-            </Badge>
-            <Badge variant="secondary">{question.topic.name}</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="default">
+                Question {questionNumber} of {totalQuestions}
+              </Badge>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "font-bold uppercase tracking-wider text-[10px]",
+                  question.difficulty === 'EASY' && "border-emerald-500 text-emerald-600 bg-emerald-500/5",
+                  question.difficulty === 'MEDIUM' && "border-amber-500 text-amber-600 bg-amber-500/5",
+                  question.difficulty === 'HARD' && "border-red-500 text-red-600 bg-red-500/5"
+                )}
+              >
+                {question.difficulty}
+              </Badge>
+            </div>
+            <Badge variant="secondary" className="font-bold">{question.topic.name}</Badge>
           </div>
           <p className="text-xl font-bold text-foreground leading-relaxed">{question.content}</p>
         </div>
