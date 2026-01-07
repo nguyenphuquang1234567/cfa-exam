@@ -9,19 +9,18 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing uid or email' }, { status: 400 });
         }
 
-        const user = await prisma.user.upsert({
+        const user = await (prisma.user.upsert as any)({
             where: { email },
             update: {
                 name,
                 image,
-                // Do not update ID if it already exists, or handle it carefully
-                // If we want the ID to BE the Firebase UID, we should ensure it's set on create
             },
             create: {
                 id: uid,
                 email,
                 name,
                 image,
+                password: null,
             },
         });
 
