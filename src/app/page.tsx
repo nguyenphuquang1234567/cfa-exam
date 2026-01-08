@@ -356,7 +356,6 @@ export default function LandingPage() {
                   <p className="text-sm font-bold text-indigo-400 tracking-widest uppercase mb-4">Our Mission</p>
                   <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
                     Making CFA® Prep <br />
-                    <span className="text-indigo-400 leading-relaxed">Accessible</span> &
                     <CyclingBadge />
                   </h2>
 
