@@ -36,6 +36,7 @@ import { FeatureCard } from '@/components/features/feature-card';
 import { MockExam, MockAnalytics, MockPlanner, MockEssay, MockItemSet } from '@/components/features/mockups';
 import { PricingSection } from '@/components/pricing-section';
 import { GlowingEffect } from '@/components/ui/glowing-effect';
+import { Typewriter } from '@/components/ui/typewriter';
 
 import { useAuth } from '@/context/auth-context';
 import { logout } from '@/lib/auth-utils';
@@ -257,10 +258,17 @@ export default function LandingPage() {
                       Not Harder.
                     </h1>
 
-                    <p className="text-xl sm:text-2xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-                      Master the curriculum with an intelligent platform that
-                      <span className="text-slate-200 font-medium"> adapts to your learning style</span>,
-                      closes knowledge gaps efficiently.
+                    <p className="text-xl sm:text-2xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed font-medium">
+                      <Typewriter
+                        text={[
+                          "Master the CFA Exam",
+                          "Adaptive Learning System",
+                          "Pass with Confidence"
+                        ]}
+                        speed={70}
+                        loop={true}
+                        className="text-amber-400 font-bold"
+                      />
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-10">
