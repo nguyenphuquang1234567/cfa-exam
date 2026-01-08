@@ -16,6 +16,10 @@ import {
   Target,
   Users,
   ArrowRight,
+  Zap,
+  Layout,
+  ShieldCheck,
+  TrendingUp as BarChart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -96,6 +100,32 @@ const levels = [
   { level: 'Level I', topics: 'Ethics, Quant, Economics, FRA, Corporate, Equity, Fixed Income, Derivatives, Alts, PM', color: 'level1' as const },
   { level: 'Level II', topics: 'Advanced Valuation, Financial Reporting, Risk Management, Item Set Focus', color: 'level2' as const },
   { level: 'Level III', topics: 'Portfolio Management, Wealth Planning, Essay Writing, Ethics Integration', color: 'level3' as const },
+];
+const whyChooseUs = [
+  {
+    title: 'Adaptive AI technology',
+    description: 'Our algorithms identify your knowledge gaps and dynamically adjust your curriculum in real-time.',
+    icon: Zap,
+    color: 'from-indigo-400 to-cyan-400',
+  },
+  {
+    title: 'CBT Simulation',
+    description: 'Practice in an environment that precisely mirrors the official CFA Institute computer-based exam.',
+    icon: Layout,
+    color: 'from-violet-400 to-purple-400',
+  },
+  {
+    title: 'Charterholder Curated',
+    description: 'Every question and explanation is vetted by CFA charterholders for maximum accuracy and LOS alignment.',
+    icon: ShieldCheck,
+    color: 'from-emerald-400 to-teal-400',
+  },
+  {
+    title: 'Motivation Focused',
+    description: 'Gamified streaks and detailed analytics keep you consistently moving toward your charter.',
+    icon: BarChart,
+    color: 'from-amber-400 to-orange-400',
+  },
 ];
 
 
@@ -248,12 +278,12 @@ export default function LandingPage() {
                 >
                   <Link href={user ? "/dashboard" : "/login"}>
                     <Button size="xl" className="h-14 px-8 text-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_30px_rgba(79,70,229,0.4)] transition-all hover:scale-105 rounded-full">
-                      Start Your Journey
+                      Get Started
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
                   <Button variant="outline" size="xl" className="h-14 px-8 text-lg border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/20 backdrop-blur-sm rounded-full">
-                    See How It Works
+                    View Demo
                   </Button>
                 </motion.div>
               </div>
@@ -500,6 +530,48 @@ export default function LandingPage() {
             </div>
 
           </section>
+
+          {/* Why Choose Us Section */}
+          <section className="py-24 relative overflow-hidden">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-16">
+                <span className="text-indigo-400 font-semibold tracking-wider uppercase text-sm">The Advantage</span>
+                <h2 className="text-4xl font-bold text-white mt-3 mb-6">
+                  Why CFA Prep AI?
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {whyChooseUs.map((benefit, index) => {
+                  const Icon = benefit.icon;
+                  return (
+                    <motion.div
+                      key={benefit.title}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.1 }}
+                      className="group relative"
+                    >
+                      <div className="absolute -inset-2 bg-gradient-to-r from-white/5 to-white/0 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="relative p-8 rounded-3xl bg-slate-900/40 border border-white/5 backdrop-blur-sm h-full flex flex-col transition-all duration-300 group-hover:border-white/10 group-hover:-translate-y-1">
+                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${benefit.color} p-3.5 mb-6 shadow-lg shadow-indigo-500/10`}>
+                          <Icon className="w-full h-full text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-3 tracking-tight">
+                          {benefit.title}
+                        </h3>
+                        <p className="text-slate-400 text-sm leading-relaxed">
+                          {benefit.description}
+                        </p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
 
           {/* Levels Section */}
           <section className="py-24 bg-slate-950 relative">
