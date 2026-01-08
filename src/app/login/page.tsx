@@ -148,7 +148,7 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        <form className="space-y-4" onSubmit={handleSubmit}>
+                        <form className="space-y-4" onSubmit={handleSubmit} method="POST" action="#">
                             {isSignUp && (
                                 <motion.div
                                     initial={{ opacity: 0, height: 0 }}
@@ -160,7 +160,9 @@ export default function LoginPage() {
                                         <User className="absolute left-3 top-3 h-5 w-5 text-slate-500" />
                                         <Input
                                             id="name"
+                                            name="name"
                                             type="text"
+                                            autoComplete="name"
                                             required={isSignUp}
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
@@ -176,7 +178,9 @@ export default function LoginPage() {
                                     <Mail className="absolute left-3 top-3 h-5 w-5 text-slate-500" />
                                     <Input
                                         id="email"
+                                        name="username"
                                         type="email"
+                                        autoComplete="username"
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -201,7 +205,9 @@ export default function LoginPage() {
                                     <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-500" />
                                     <Input
                                         id="password"
+                                        name="password"
                                         type="password"
+                                        autoComplete={isSignUp ? "new-password" : "current-password"}
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
@@ -211,6 +217,7 @@ export default function LoginPage() {
                                 </div>
                             </div>
                             <Button
+                                type="submit"
                                 disabled={isLoading}
                                 className="w-full h-12 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 group transition-all disabled:opacity-50"
                             >
