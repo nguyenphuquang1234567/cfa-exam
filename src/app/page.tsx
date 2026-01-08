@@ -292,6 +292,17 @@ export default function LandingPage() {
                     />
                   </p>
 
+                  <div className="flex flex-wrap gap-x-6 gap-y-3 mb-8">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/5 border border-indigo-500/10 backdrop-blur-sm">
+                      <CheckCircle className="h-4 w-4 text-indigo-400" />
+                      <span className="text-sm font-medium text-indigo-100/80">Free Diagnostic Test</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/5 border border-cyan-500/10 backdrop-blur-sm">
+                      <CheckCircle className="h-4 w-4 text-cyan-400" />
+                      <span className="text-sm font-medium text-cyan-100/80">24/7 Dedicated Support</span>
+                    </div>
+                  </div>
+
                   <div className="flex flex-col sm:flex-row gap-4 justify-start items-center mb-10">
                     <Link href={user ? "/dashboard" : "/login"}>
                       <Button size="xl" className="h-14 px-8 text-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_30px_rgba(79,70,229,0.4)] transition-all hover:scale-105 rounded-full w-full sm:w-auto">
