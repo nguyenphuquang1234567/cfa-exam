@@ -288,7 +288,7 @@ export default function LandingPage() {
                       ]}
                       speed={70}
                       loop={true}
-                      className="text-amber-400 font-bold"
+                      className="text-indigo-400 font-bold"
                     />
                   </p>
 

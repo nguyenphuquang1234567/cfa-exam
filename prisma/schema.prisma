@@ -44,8 +44,7 @@ enum CFALevel {
 
 enum SubscriptionType {
   FREE
-  PREMIUM_MONTHLY
-  PREMIUM_YEARLY
+  PRO
 }
 
 // Topics and Learning Objectives
