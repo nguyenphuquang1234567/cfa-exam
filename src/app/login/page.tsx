@@ -8,11 +8,14 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { signInWithGoogle } from '@/lib/auth-utils';
+import { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword } from '@/lib/auth-utils';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
+    const [isSignUp, setIsSignUp] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const router = useRouter();
 
     const handleGoogleSignIn = async () => {
@@ -22,6 +25,48 @@ export default function LoginPage() {
             router.push('/dashboard');
         } catch (error) {
             console.error(error);
+            alert('Failed to sign in with Google');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email || !password) {
+            alert('Please fill in all fields');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            let firebaseUser;
+            if (isSignUp) {
+                firebaseUser = await signUpWithEmail(email, password);
+                alert('Account created successfully!');
+            } else {
+                firebaseUser = await signInWithEmail(email, password);
+            }
+
+            // Manually trigger sync to store password
+            if (firebaseUser) {
+                await fetch('/api/user/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email,
+                        name: firebaseUser.displayName,
+                        image: firebaseUser.photoURL,
+                        password: password, // Send password to be hashed and stored
+                    }),
+                });
+            }
+
+            router.push('/dashboard');
+        } catch (error: any) {
+            console.error(error);
+            alert(error.message || 'Authentication failed');
         } finally {
             setIsLoading(false);
         }
@@ -57,8 +102,12 @@ export default function LoginPage() {
                                 className="h-12 w-12 object-contain brightness-125 saturate-150 drop-shadow-[0_0_12px_rgba(34,197,253,0.6)]"
                             />
                         </motion.div>
-                        <h2 className="text-3xl font-bold text-white tracking-tight">Welcome Back</h2>
-                        <p className="text-slate-400 mt-2">Sign in to continue your CFA journey</p>
+                        <h2 className="text-3xl font-bold text-white tracking-tight">
+                            {isSignUp ? 'Create Account' : 'Welcome Back'}
+                        </h2>
+                        <p className="text-slate-400 mt-2">
+                            {isSignUp ? 'Start your CFA journey today' : 'Sign in to continue your CFA journey'}
+                        </p>
                     </div>
 
                     <div className="space-y-4">
@@ -94,17 +143,21 @@ export default function LoginPage() {
                                 <span className="w-full border-t border-white/10" />
                             </div>
                             <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-[#0a0a0f] px-2 text-slate-500">Or continue with email</span>
+                                <span className="bg-[#0a0a0f] px-4 text-slate-500">Or continue with email</span>
                             </div>
                         </div>
 
-                        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                        <form className="space-y-4" onSubmit={handleSubmit}>
                             <div className="space-y-2">
                                 <Label htmlFor="email" className="text-slate-300 ml-1">Email</Label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-3 h-5 w-5 text-slate-500" />
                                     <Input
                                         id="email"
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         placeholder="name@example.com"
                                         className="pl-10 h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-indigo-500/50"
                                     />
@@ -113,28 +166,45 @@ export default function LoginPage() {
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between ml-1">
                                     <Label htmlFor="password" title="Password feature coming soon" className="text-slate-300">Password</Label>
-                                    <a href="#" className="text-xs text-indigo-400 hover:text-indigo-300">Forgot?</a>
+                                    <Link
+                                        href="/reset-password"
+                                        className="text-xs text-indigo-400 hover:text-indigo-300"
+                                    >
+                                        Forgot?
+                                    </Link>
                                 </div>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-500" />
                                     <Input
                                         id="password"
                                         type="password"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         placeholder="••••••••"
                                         className="pl-10 h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-indigo-500/50"
                                     />
                                 </div>
                             </div>
-                            <Button className="w-full h-12 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 group">
-                                Sign In
+                            <Button
+                                disabled={isLoading}
+                                className="w-full h-12 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 group transition-all disabled:opacity-50"
+                            >
+                                {isLoading ? 'Processing...' : (isSignUp ? 'Create Account' : 'Sign In')}
                                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                             </Button>
                         </form>
                     </div>
 
                     <p className="text-center mt-8 text-slate-400 text-sm">
-                        Don't have an account?{' '}
-                        <a href="#" className="text-indigo-400 hover:text-indigo-300 font-medium">Create one</a>
+                        {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                        <button
+                            type="button"
+                            onClick={() => setIsSignUp(!isSignUp)}
+                            className="text-indigo-400 hover:text-indigo-300 font-medium"
+                        >
+                            {isSignUp ? 'Sign In' : 'Create one'}
+                        </button>
                     </p>
                 </div>
 

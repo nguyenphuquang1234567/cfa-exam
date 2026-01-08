@@ -16,6 +16,7 @@ import {
   LogOut,
   Crown,
   Home,
+  Key,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -152,18 +153,16 @@ export function Navbar() {
                     <span>Home</span>
                   </DropdownMenuItem>
                 </Link>
-                <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer">
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  <span>Billing</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
+                {user?.providerData.some(provider => provider.providerId === 'password') && (
+                  <Link href="/reset-password">
+                    <DropdownMenuItem
+                      className="focus:bg-accent focus:text-accent-foreground cursor-pointer"
+                    >
+                      <Key className="mr-2 h-4 w-4" />
+                      <span>Reset Password</span>
+                    </DropdownMenuItem>
+                  </Link>
+                )}
                 <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem
                   onClick={handleLogout}

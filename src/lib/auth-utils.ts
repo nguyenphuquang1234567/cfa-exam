@@ -3,7 +3,10 @@ import {
     GoogleAuthProvider,
     signOut,
     signInWithEmailAndPassword,
-    createUserWithEmailAndPassword
+    createUserWithEmailAndPassword,
+    sendPasswordResetEmail,
+    updatePassword,
+    confirmPasswordReset
 } from "firebase/auth";
 import { auth } from "./firebase";
 
@@ -15,6 +18,61 @@ export const signInWithGoogle = async () => {
         return result.user;
     } catch (error) {
         console.error("Error signing in with Google", error);
+        throw error;
+    }
+};
+
+export const signInWithEmail = async (email: string, pass: string) => {
+    try {
+        const result = await signInWithEmailAndPassword(auth, email, pass);
+        return result.user;
+    } catch (error) {
+        console.error("Error signing in with email", error);
+        throw error;
+    }
+};
+
+export const signUpWithEmail = async (email: string, pass: string) => {
+    try {
+        const result = await createUserWithEmailAndPassword(auth, email, pass);
+        return result.user;
+    } catch (error) {
+        console.error("Error signing up with email", error);
+        throw error;
+    }
+};
+
+export const resetPassword = async (email: string) => {
+    try {
+        const actionCodeSettings = {
+            url: `${window.location.origin}/reset-password`,
+            handleCodeInApp: true,
+        };
+        await sendPasswordResetEmail(auth, email, actionCodeSettings);
+    } catch (error) {
+        console.error("Error sending password reset email", error);
+        throw error;
+    }
+};
+
+export const changePassword = async (newPassword: string) => {
+    try {
+        if (auth.currentUser) {
+            await updatePassword(auth.currentUser, newPassword);
+        } else {
+            throw new Error("No user is currently signed in.");
+        }
+    } catch (error) {
+        console.error("Error updating password", error);
+        throw error;
+    }
+};
+
+export const confirmReset = async (code: string, newPassword: string) => {
+    try {
+        await confirmPasswordReset(auth, code, newPassword);
+    } catch (error) {
+        console.error("Error confirming password reset", error);
         throw error;
     }
 };
