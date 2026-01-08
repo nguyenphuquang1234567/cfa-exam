@@ -6,13 +6,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { GlowingEffect } from '@/components/ui/glowing-effect';
+import { NumberFlow } from '@/components/ui/number-flow';
+import { Tab } from '@/components/ui/pricing-tab';
 
 export function PricingSection() {
     const [isYearly, setIsYearly] = useState(true);
 
     const plans: {
         name: string;
-        price: { monthly: string; yearly: string };
+        price: { monthly: number; yearly: number };
         description: string;
         features: string[];
         cta: string;
@@ -22,7 +24,7 @@ export function PricingSection() {
     }[] = [
             {
                 name: 'Free Trial',
-                price: { monthly: '$0', yearly: '$0' },
+                price: { monthly: 0, yearly: 0 },
                 description: 'Get a taste of our AI-driven CFA prep experience.',
                 features: [
                     '30 Practice MCQ Questions',
@@ -36,7 +38,7 @@ export function PricingSection() {
             },
             {
                 name: 'Pro Access',
-                price: { monthly: '$29', yearly: '$199' },
+                price: { monthly: 29, yearly: 199 },
                 description: 'Complete tools for one specific CFA Level.',
                 features: [
                     'Full Q-Bank (3000+ Questions)',
@@ -53,7 +55,7 @@ export function PricingSection() {
             },
             {
                 name: 'Platinum Access',
-                price: { monthly: '$59', yearly: '$499' },
+                price: { monthly: 59, yearly: 499 },
                 description: 'Full access to all levels and premium support.',
                 features: [
                     'All Levels (I, II, and III)',
@@ -82,20 +84,18 @@ export function PricingSection() {
                     </p>
 
                     {/* Billing Toggle */}
-                    <div className="flex items-center justify-center gap-4 mb-12">
-                        <span className={`text-sm font-medium ${!isYearly ? 'text-white' : 'text-slate-500'}`}>Monthly</span>
-                        <button
-                            onClick={() => setIsYearly(!isYearly)}
-                            className="relative w-14 h-7 rounded-full bg-slate-800 p-1 transition-colors duration-300 focus:outline-none ring-2 ring-white/5"
-                        >
-                            <motion.div
-                                animate={{ x: isYearly ? 28 : 0 }}
-                                className="w-5 h-5 rounded-full bg-indigo-500 shadow-lg"
-                            />
-                        </button>
-                        <span className={`text-sm font-medium ${isYearly ? 'text-white' : 'text-slate-500'}`}>
-                            Yearly <span className="text-emerald-400 ml-1 text-xs font-bold leading-none bg-emerald-400/10 px-2 py-0.5 rounded-full">SAVE 40%</span>
-                        </span>
+                    <div className="mx-auto flex w-fit rounded-full bg-slate-900 border border-white/5 p-1 mb-12">
+                        <Tab
+                            text="Monthly"
+                            selected={!isYearly}
+                            setSelected={() => setIsYearly(false)}
+                        />
+                        <Tab
+                            text="Yearly"
+                            selected={isYearly}
+                            setSelected={() => setIsYearly(true)}
+                            discount={true}
+                        />
                     </div>
                 </div>
 
@@ -129,17 +129,10 @@ export function PricingSection() {
                                 <div className="mb-0">
                                     <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
                                     <div className="flex items-baseline gap-1 mb-4 h-16">
-                                        <AnimatePresence mode="wait">
-                                            <motion.span
-                                                key={isYearly ? 'yearly' : 'monthly'}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -10 }}
-                                                className="text-4xl sm:text-5xl font-extrabold text-white"
-                                            >
-                                                {isYearly ? plan.price.yearly : plan.price.monthly}
-                                            </motion.span>
-                                        </AnimatePresence>
+                                        <span className="text-4xl sm:text-5xl font-extrabold text-white">$</span>
+                                        <span className="text-4xl sm:text-5xl font-extrabold text-white">
+                                            <NumberFlow value={isYearly ? plan.price.yearly : plan.price.monthly} />
+                                        </span>
                                         <span className="text-slate-400 text-sm font-medium">/{isYearly ? 'yr' : 'mo'}</span>
                                     </div>
                                     <p className="text-sm text-slate-400 h-10 mb-8">{plan.description}</p>
