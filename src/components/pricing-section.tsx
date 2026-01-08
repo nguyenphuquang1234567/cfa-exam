@@ -166,7 +166,7 @@ export function PricingSection() {
 
                 <div className="mt-16 text-center">
                     <p className="text-slate-500 text-[10px] max-w-2xl mx-auto leading-relaxed uppercase tracking-widest font-medium opacity-60">
-                        CFA Institute does not endorse, promote or warrant the accuracy or quality of the products or services offered by CFA Prep AI. CFA® and Chartered Financial Analyst® are registered trademarks owned by CFA Institute.
+                        CFA Institute does not endorse, promote or warrant the accuracy or quality of the products or services offered by MentisAI. CFA and Chartered Financial Analyst are registered trademarks owned by CFA Institute.
                     </p>
                 </div>
             </div>

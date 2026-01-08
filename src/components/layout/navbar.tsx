@@ -75,7 +75,7 @@ export function Navbar() {
             </motion.div>
             <div className="hidden sm:block">
               <h1 className="text-xl font-bold text-foreground">
-                CFA <span className="text-indigo-400">Prep</span> AI
+                Mentis<span className="text-indigo-400">AI</span>
               </h1>
               <p className="text-xs text-muted-foreground font-medium">Master Your Exam</p>
             </div>

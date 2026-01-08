@@ -211,7 +211,7 @@ export default function LandingPage() {
                     transition={{ delay: 0.6, duration: 0.5 }}
                     className="text-lg font-bold text-white tracking-tight"
                   >
-                    CFA <span className="text-indigo-400">Prep</span> AI
+                    Mentis<span className="text-indigo-400">AI</span>
                   </motion.span>
                 </div>
 
@@ -275,7 +275,7 @@ export default function LandingPage() {
                     </motion.div>
 
                     <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.1] mb-8">
-                      Study CFA® <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-indigo-400">Smarter.</span> <br className="hidden sm:block" />
+                      Study CFA <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-indigo-400">Smarter.</span> <br className="hidden sm:block" />
                       Not Harder.
                     </h1>
 
@@ -376,7 +376,7 @@ export default function LandingPage() {
                 >
                   <p className="text-sm font-bold text-indigo-400 tracking-widest uppercase mb-4">Our Mission</p>
                   <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
-                    Making CFA® Prep <br />
+                    Making CFA Prep <br />
                     <CyclingBadge />
                   </h2>
 
@@ -414,7 +414,7 @@ export default function LandingPage() {
               <div className="text-center mb-20">
                 <span className="text-indigo-400 font-semibold tracking-wider uppercase text-sm">Features</span>
                 <h2 className="text-4xl lg:text-5xl font-bold text-white mt-3 mb-6">
-                  Designed for CFA® Exam Success
+                  Designed for CFA Exam Success
                 </h2>
                 <p className="text-xl text-slate-400 max-w-2xl mx-auto">
                   Our comprehensive platform covers all CFA levels with AI-driven tools designed
@@ -528,7 +528,7 @@ export default function LandingPage() {
               <div className="text-center mb-16">
                 <span className="text-indigo-400 font-semibold tracking-wider uppercase text-sm">The Advantage</span>
                 <h2 className="text-4xl font-bold text-white mt-3 mb-6">
-                  Why CFA Prep AI?
+                  Why MentisAI?
                 </h2>
               </div>
 
@@ -577,7 +577,7 @@ export default function LandingPage() {
               <div className="text-center mb-16">
                 <span className="text-indigo-400 font-semibold tracking-wider uppercase text-sm">Curriculum</span>
                 <h2 className="text-4xl font-bold text-white mt-3 mb-6">
-                  Prepare for Any CFA® Level
+                  Prepare for Any CFA Level
                 </h2>
               </div>
 
@@ -679,7 +679,7 @@ export default function LandingPage() {
                       className="h-6 w-6 object-contain brightness-125 saturate-125"
                     />
                   </div>
-                  <span className="font-bold text-slate-300">CFA Prep AI</span>
+                  <span className="font-bold text-slate-300">MentisAI</span>
                 </div>
 
                 <div className="flex gap-8 text-sm text-slate-500">
@@ -689,7 +689,7 @@ export default function LandingPage() {
                 </div>
 
                 <p className="text-sm text-slate-600">
-                  © 2024 CFA Prep AI. Not affiliated with CFA Institute.
+                  © 2024 MentisAI. Not affiliated with CFA Institute.
                 </p>
               </div>
             </div>
