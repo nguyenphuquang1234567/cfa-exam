@@ -156,7 +156,7 @@ export default function ItemSetsPage() {
                   <CardContent className="p-5 flex flex-col justify-between h-full">
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-primary/60 bg-primary/5 px-2 py-0.5 rounded border border-primary/10">
+                        <span className="text-xs font-black text-primary bg-primary/10 px-2.5 py-1 rounded-md border border-primary/20 shadow-sm shadow-primary/5">
                           RD {reading.order}
                         </span>
                       </div>
