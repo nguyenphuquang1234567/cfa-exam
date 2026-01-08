@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-
 import { LucideIcon } from 'lucide-react';
+import { GlowingEffect } from '@/components/ui/glowing-effect';
 
 interface FeatureCardProps {
     title: string;
@@ -11,9 +11,19 @@ interface FeatureCardProps {
     iconColor?: string; // Tailwind class for icon color
     className?: string; // For grid column/row spans
     delay?: number;
+    glowingVariant?: "indigo" | "emerald" | "amber" | "rose" | "cyan";
 }
 
-export function FeatureCard({ title, description, children, icon: Icon, iconColor = 'text-indigo-400', className = '', delay = 0 }: FeatureCardProps) {
+export function FeatureCard({
+    title,
+    description,
+    children,
+    icon: Icon,
+    iconColor = 'text-indigo-400',
+    className = '',
+    delay = 0,
+    glowingVariant = "indigo"
+}: FeatureCardProps) {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -22,11 +32,16 @@ export function FeatureCard({ title, description, children, icon: Icon, iconColo
             transition={{ delay, duration: 0.5 }}
             className={`relative group rounded-[2.5rem] bg-slate-900/40 border border-white/5 overflow-hidden ${className}`}
         >
-            {/* Hover Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/0 via-transparent to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none" />
+            <GlowingEffect
+                spread={40}
+                proximity={64}
+                inactiveZone={0.01}
+                variant={glowingVariant}
+                borderWidth={1.5}
+            />
 
             {/* Content Container */}
-            <div className="relative h-full flex flex-col">
+            <div className="relative h-full flex flex-col z-10">
                 {/* Visual Mockup Area - grows to fill space, but pushes text down */}
                 <div className="flex-grow relative min-h-[200px] overflow-hidden">
                     {children}

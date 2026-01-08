@@ -35,6 +35,7 @@ import { ContainerScroll } from '@/components/ui/container-scroll-animation';
 import { FeatureCard } from '@/components/features/feature-card';
 import { MockExam, MockAnalytics, MockPlanner, MockEssay, MockItemSet } from '@/components/features/mockups';
 import { PricingSection } from '@/components/pricing-section';
+import { GlowingEffect } from '@/components/ui/glowing-effect';
 
 import { useAuth } from '@/context/auth-context';
 import { logout } from '@/lib/auth-utils';
@@ -404,6 +405,7 @@ export default function LandingPage() {
                   iconColor="text-indigo-400"
                   className="md:col-span-2"
                   delay={0}
+                  glowingVariant="indigo"
                 >
                   <MockExam />
                 </FeatureCard>
@@ -416,6 +418,7 @@ export default function LandingPage() {
                   iconColor="text-emerald-400"
                   className="md:col-span-1"
                   delay={0.1}
+                  glowingVariant="emerald"
                 >
                   <MockAnalytics />
                 </FeatureCard>
@@ -425,9 +428,10 @@ export default function LandingPage() {
                   title="Item Set Simulator"
                   description="Practice Level II style vignettes with real exam-like conditions."
                   icon={FileText}
-                  iconColor="text-purple-400"
+                  iconColor="text-rose-400"
                   className="md:col-span-1 md:row-span-2"
                   delay={0.2}
+                  glowingVariant="rose"
                 >
                   <MockItemSet />
                 </FeatureCard>
@@ -440,6 +444,7 @@ export default function LandingPage() {
                   iconColor="text-rose-400"
                   className="md:col-span-2"
                   delay={0.3}
+                  glowingVariant="rose"
                 >
                   <MockPlanner />
                 </FeatureCard>
@@ -452,6 +457,7 @@ export default function LandingPage() {
                   iconColor="text-amber-400"
                   className="md:col-span-1"
                   delay={0.4}
+                  glowingVariant="amber"
                 >
                   <MockEssay />
                 </FeatureCard>
@@ -464,6 +470,7 @@ export default function LandingPage() {
                   iconColor="text-cyan-400"
                   className="md:col-span-1"
                   delay={0.5}
+                  glowingVariant="cyan"
                 >
                   {/* Using a smaller version of MissionChat essentially */}
                   <div className="absolute inset-0 flex items-center justify-center p-6">
@@ -500,6 +507,12 @@ export default function LandingPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {whyChooseUs.map((benefit, index) => {
                   const Icon = benefit.icon;
+                  // Map benefit colors to glowing variants
+                  const glowVariant =
+                    index === 0 ? "indigo" :
+                      index === 1 ? "rose" :
+                        index === 2 ? "emerald" : "amber";
+
                   return (
                     <motion.div
                       key={benefit.title}
@@ -507,10 +520,10 @@ export default function LandingPage() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: index * 0.1 }}
-                      className="group relative"
+                      className="group relative rounded-3xl overflow-hidden"
                     >
-                      <div className="absolute -inset-2 bg-gradient-to-r from-white/5 to-white/0 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <div className="relative p-8 rounded-3xl bg-slate-900/40 border border-white/5 backdrop-blur-sm h-full flex flex-col transition-all duration-300 group-hover:border-white/10 group-hover:-translate-y-1">
+                      <GlowingEffect variant={glowVariant as any} />
+                      <div className="relative p-8 rounded-3xl bg-slate-900/40 border border-white/5 backdrop-blur-sm h-full flex flex-col transition-all duration-300 group-hover:bg-slate-900/60">
                         <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${benefit.color} p-3.5 mb-6 shadow-lg shadow-indigo-500/10`}>
                           <Icon className="w-full h-full text-white" />
                         </div>
@@ -548,6 +561,10 @@ export default function LandingPage() {
                     level3: "bg-amber-500/10 text-amber-400 border-amber-500/20"
                   }[level.color];
 
+                  const glowVariant =
+                    index === 0 ? "indigo" :
+                      index === 1 ? "rose" : "amber";
+
                   return (
                     <motion.div
                       key={level.level}
@@ -555,9 +572,10 @@ export default function LandingPage() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: index * 0.1 }}
-                      className="group"
+                      className="group relative rounded-3xl overflow-hidden"
                     >
-                      <div className="h-full relative p-8 rounded-3xl bg-slate-900/40 border border-white/5 backdrop-blur-sm transition-all duration-300 group-hover:bg-slate-900/60 group-hover:border-white/10 group-hover:-translate-y-1 flex flex-col">
+                      <GlowingEffect variant={glowVariant as any} />
+                      <div className="h-full relative p-8 rounded-3xl bg-slate-900/40 border border-white/5 backdrop-blur-sm transition-all duration-300 group-hover:bg-slate-900/60 flex flex-col">
                         <div className="flex justify-start mb-6">
                           <Badge className={`${badgeColors} border px-3 py-1 font-medium rounded-full text-xs`}>
                             {level.level}
@@ -572,7 +590,7 @@ export default function LandingPage() {
                           {level.topics}
                         </p>
 
-                        <Link href={user ? "/dashboard" : "/login"} className="block w-full">
+                        <Link href={user ? "/dashboard" : "/login"} className="block w-full mt-auto">
                           <Button variant="outline" className="w-full h-12 border-white/10 hover:border-white/20 hover:bg-white/5 text-white font-medium flex items-center justify-center gap-2 rounded-xl transition-all">
                             Start {level.level}
                             <ChevronRight className="h-4 w-4" />
