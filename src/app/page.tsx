@@ -139,8 +139,8 @@ export default function LandingPage() {
   const { user } = useAuth();
 
   useEffect(() => {
-    const exitTimer = setTimeout(() => setLoadingState('exiting'), 2500);
-    const completeTimer = setTimeout(() => setLoadingState('complete'), 3100);
+    const exitTimer = setTimeout(() => setLoadingState('exiting'), 5000);
+    const completeTimer = setTimeout(() => setLoadingState('complete'), 5800);
     return () => { clearTimeout(exitTimer); clearTimeout(completeTimer); };
   }, []);
 

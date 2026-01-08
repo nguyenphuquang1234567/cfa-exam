@@ -60,9 +60,12 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/25">
+            <motion.div
+              layoutId="brand-logo"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/25"
+            >
               <GraduationCap className="h-6 w-6 text-white" />
-            </div>
+            </motion.div>
             <div className="hidden sm:block">
               <h1 className="text-xl font-bold text-foreground">
                 CFA <span className="text-indigo-400">Prep</span> AI
