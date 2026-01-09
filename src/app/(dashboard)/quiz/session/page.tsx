@@ -51,7 +51,8 @@ function QuizContent() {
 
         if (data.error) throw new Error(data.error);
 
-        startQuiz(data, mode);
+        const quizId = `session-${topics}-${mode}-${count}-${difficulty}`;
+        startQuiz(quizId, data, mode);
       } catch (error) {
         console.error('Failed to load questions:', error);
       } finally {

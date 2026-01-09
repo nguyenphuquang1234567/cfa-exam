@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Outfit, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+import 'katex/dist/katex.min.css';
 import SmoothScroll from '../components/smooth-scroll';
 
 const outfit = Outfit({

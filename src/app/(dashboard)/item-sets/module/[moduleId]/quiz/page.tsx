@@ -58,7 +58,7 @@ function ModuleQuizContent() {
                     readingId: data.readingId,
                     bookId: data.bookId
                 });
-                startQuiz(data.questions, 'PRACTICE');
+                startQuiz(moduleId as string, data.questions, 'PRACTICE');
             } catch (error) {
                 console.error('Failed to load module quizzes:', error);
             } finally {

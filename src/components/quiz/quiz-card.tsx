@@ -7,6 +7,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { QuizQuestion } from '@/store/quiz-store';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 interface QuizCardProps {
   question: QuizQuestion;
@@ -55,7 +59,25 @@ export function QuizCard({
 
             <Badge variant="secondary" className="font-black text-[10px] bg-slate-800 text-slate-300 border-slate-700 uppercase tracking-widest">{question.topic.name}</Badge>
           </div>
-          <p className="text-2xl font-extrabold text-foreground leading-[1.4] tracking-tight">{question.content}</p>
+          <div className="markdown-content text-2xl font-extrabold text-foreground leading-[1.4] tracking-tight">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm, remarkMath]}
+              rehypePlugins={[rehypeKatex]}
+              components={{
+                p: ({ children }) => <span className="inline-block mb-2">{children}</span>,
+                table: ({ ...props }) => (
+                  <div className="overflow-x-auto my-6 rounded-xl border border-border bg-card/50">
+                    <table className="w-full border-collapse" {...props} />
+                  </div>
+                ),
+                thead: ({ ...props }) => <thead className="bg-muted/50" {...props} />,
+                th: ({ ...props }) => <th className="border-b border-border p-3 text-left font-black uppercase text-xs tracking-wider" {...props} />,
+                td: ({ ...props }) => <td className="border-b border-border/50 p-3 text-sm font-medium" {...props} />,
+              }}
+            >
+              {question.content}
+            </ReactMarkdown>
+          </div>
         </div>
 
 
@@ -136,7 +158,7 @@ export function QuizCard({
               >
                 {isCorrect ? (
                   <>
-                    <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
                       <Check className="h-5 w-5 text-white" />
                     </div>
                     <div>
@@ -146,7 +168,7 @@ export function QuizCard({
                   </>
                 ) : (
                   <>
-                    <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center shrink-0">
                       <X className="h-5 w-5 text-white" />
                     </div>
                     <div>
@@ -180,11 +202,26 @@ export function QuizCard({
                   className="p-6 rounded-xl bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-900/30"
                 >
                   <div className="flex items-start gap-3">
-                    <HelpCircle className="h-5 w-5 text-violet-500 mt-0.5" />
-                    <div>
+                    <HelpCircle className="h-5 w-5 text-violet-500 mt-1 shrink-0" />
+                    <div className="w-full">
                       <h4 className="font-bold text-violet-900 dark:text-violet-100 mb-2">Explanation</h4>
-                      <div className="text-sm text-violet-800/80 dark:text-violet-200/80 leading-relaxed">
-                        {question.explanation}
+                      <div className="markdown-content text-sm text-violet-800/80 dark:text-violet-200/80 leading-relaxed">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm, remarkMath]}
+                          rehypePlugins={[rehypeKatex]}
+                          components={{
+                            table: ({ ...props }) => (
+                              <div className="overflow-x-auto my-4 rounded-lg border border-violet-200 dark:border-violet-800">
+                                <table className="w-full border-collapse" {...props} />
+                              </div>
+                            ),
+                            thead: ({ ...props }) => <thead className="bg-violet-100/50 dark:bg-violet-900/50" {...props} />,
+                            th: ({ ...props }) => <th className="border-b border-violet-200 dark:border-violet-800 p-2 text-left font-bold" {...props} />,
+                            td: ({ ...props }) => <td className="border-b border-violet-100 dark:border-violet-900 p-2" {...props} />,
+                          }}
+                        >
+                          {question.explanation}
+                        </ReactMarkdown>
                       </div>
                     </div>
                   </div>
@@ -199,4 +236,3 @@ export function QuizCard({
     </motion.div >
   );
 }
-
