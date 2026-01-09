@@ -51,22 +51,13 @@ export function QuizCard({
               <Badge variant="default">
                 Question {questionNumber} of {totalQuestions}
               </Badge>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "font-bold uppercase tracking-wider text-[10px]",
-                  question.difficulty === 'EASY' && "border-emerald-500 text-emerald-600 bg-emerald-500/5",
-                  question.difficulty === 'MEDIUM' && "border-amber-500 text-amber-600 bg-amber-500/5",
-                  question.difficulty === 'HARD' && "border-red-500 text-red-600 bg-red-500/5"
-                )}
-              >
-                {question.difficulty}
-              </Badge>
             </div>
-            <Badge variant="secondary" className="font-bold">{question.topic.name}</Badge>
+
+            <Badge variant="secondary" className="font-black text-[10px] bg-slate-800 text-slate-300 border-slate-700 uppercase tracking-widest">{question.topic.name}</Badge>
           </div>
-          <p className="text-xl font-bold text-foreground leading-relaxed">{question.content}</p>
+          <p className="text-2xl font-extrabold text-foreground leading-[1.4] tracking-tight">{question.content}</p>
         </div>
+
 
         <CardContent className="p-6">
           {/* Options */}
@@ -168,44 +159,44 @@ export function QuizCard({
                 )}
               </div>
 
-              {/* Toggle Explanation */}
-              <Button
-                variant="outline"
-                onClick={onToggleExplanation}
-                className="w-full mb-4"
-              >
-                <Lightbulb className="h-4 w-4 mr-2" />
-                {showExplanation ? 'Hide Explanation' : 'Show Explanation'}
-              </Button>
+              {/* Toggle Explanation Button */}
+              <div className="flex justify-end mb-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleExplanation}
+                  className="text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-900/20"
+                >
+                  <Lightbulb className="h-4 w-4 mr-2" />
+                  {showExplanation ? 'Hide Explanation' : 'Show Explanation'}
+                </Button>
+              </div>
 
-              {/* Explanation */}
+              {/* Explanation Content */}
               {showExplanation && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 rounded-xl bg-muted/50 border border-border"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-6 rounded-xl bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-900/30"
                 >
-                  <div className="flex items-center gap-2 mb-3">
-                    <HelpCircle className="h-5 w-5 text-primary" />
-                    <h4 className="font-bold text-foreground">Explanation</h4>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed mb-4 font-medium">
-                    {question.explanation}
-                  </p>
-
-                  {question.formula && (
-                    <div className="p-3 rounded-lg bg-muted border border-border">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1 font-bold">Formula</p>
-                      <p className="text-primary font-mono font-bold">{question.formula}</p>
+                  <div className="flex items-start gap-3">
+                    <HelpCircle className="h-5 w-5 text-violet-500 mt-0.5" />
+                    <div>
+                      <h4 className="font-bold text-violet-900 dark:text-violet-100 mb-2">Explanation</h4>
+                      <div className="text-sm text-violet-800/80 dark:text-violet-200/80 leading-relaxed">
+                        {question.explanation}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </motion.div>
               )}
             </motion.div>
           )}
+
+
         </CardContent>
       </Card>
-    </motion.div>
+    </motion.div >
   );
 }
 

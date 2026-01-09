@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Book as BookIcon,
   ChevronRight,
@@ -36,13 +37,16 @@ interface Book {
   readings: Reading[];
 }
 
-
 export default function ItemSetsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [books, setBooks] = useState<Book[]>([]);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [selectedReading, setSelectedReading] = useState<Reading | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const readingId = searchParams.get('readingId');
+  const bookId = searchParams.get('bookId');
 
   useEffect(() => {
     async function fetchBooks() {
@@ -50,6 +54,17 @@ export default function ItemSetsPage() {
         const response = await fetch('/api/books');
         const data = await response.json();
         setBooks(data);
+
+        if (bookId) {
+          const book = data.find((b: Book) => b.id === bookId);
+          if (book) {
+            setSelectedBook(book);
+            if (readingId) {
+              const reading = book.readings.find((r: Reading) => r.id === readingId);
+              if (reading) setSelectedReading(reading);
+            }
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch books:', error);
       } finally {
@@ -57,7 +72,29 @@ export default function ItemSetsPage() {
       }
     }
     fetchBooks();
-  }, []);
+  }, [bookId, readingId]);
+
+  const handleSelectBook = (book: Book) => {
+    setSelectedBook(book);
+    router.push(`/item-sets?bookId=${book.id}`, { scroll: false });
+  };
+
+  const handleSelectReading = (reading: Reading) => {
+    setSelectedReading(reading);
+    if (selectedBook) {
+      router.push(`/item-sets?bookId=${selectedBook.id}&readingId=${reading.id}`, { scroll: false });
+    }
+  };
+
+  const handleBack = () => {
+    if (selectedReading) {
+      setSelectedReading(null);
+      router.push(`/item-sets?bookId=${selectedBook?.id}`, { scroll: false });
+    } else {
+      setSelectedBook(null);
+      router.push('/item-sets', { scroll: false });
+    }
+  };
 
   if (loading) {
     return (
@@ -75,13 +112,7 @@ export default function ItemSetsPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => {
-              if (selectedReading) {
-                setSelectedReading(null);
-              } else {
-                setSelectedBook(null);
-              }
-            }}
+            onClick={handleBack}
             className="rounded-full"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -151,7 +182,7 @@ export default function ItemSetsPage() {
 
                     <Button
                       className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all rounded-xl"
-                      onClick={() => setSelectedBook(book)}
+                      onClick={() => handleSelectBook(book)}
                     >
                       Study Now
                       <ChevronRight className="h-5 w-5 ml-2" />
@@ -175,7 +206,7 @@ export default function ItemSetsPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.02 }}
-                onClick={() => setSelectedReading(reading)}
+                onClick={() => handleSelectReading(reading)}
               >
                 <Card className="h-full hover:bg-muted/30 transition-colors border border-border/60 hover:border-primary/40 group cursor-pointer relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-1 h-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -221,7 +252,9 @@ export default function ItemSetsPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
+                onClick={() => window.location.href = `/item-sets/module/${module.id}/quiz`}
               >
+
                 <Card className="hover:bg-muted/30 transition-all border border-border/60 hover:border-indigo-500/40 group cursor-pointer relative overflow-hidden bg-gradient-to-r from-transparent to-transparent hover:to-indigo-500/5">
                   <CardContent className="p-6 flex items-center gap-6">
                     <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 group-hover:bg-indigo-500/20 transition-colors">

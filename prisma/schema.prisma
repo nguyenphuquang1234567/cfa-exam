@@ -334,7 +334,46 @@ model Module {
   title     String   // ex: "Interest Rates and Return Measurement"
   order     Int
 
+  quizHeader ModuleQuizHeader?
+
   @@unique([readingId, code])      // tránh trùng module trong cùng reading
   @@index([readingId, order])
 }
+
+model ModuleQuizHeader {
+  id        String   @id @default(cuid())
+
+  moduleId  String   @unique
+  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  title     String   // e.g. "MODULE QUIZ 1.1"
+  questions ModuleQuizQuestion[]
+}
+
+model ModuleQuizQuestion {
+  id        String   @id @default(cuid())
+  headerId  String
+  header    ModuleQuizHeader @relation(fields: [headerId], references: [id], onDelete: Cascade)
+
+  questionNo Int
+  prompt    String  @db.Text
+  optionA   String  @db.Text
+  optionB   String  @db.Text
+  optionC   String  @db.Text
+  correct   AnswerChoice @default(B)
+  explanation String? @db.Text
+
+  @@unique([headerId, questionNo])
+  @@index([headerId])
+}
+
+enum AnswerChoice {
+  A
+  B
+  C
+}
+
+
+
+
 
