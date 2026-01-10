@@ -32,7 +32,7 @@ async function main() {
         updatedOptionA = escape$(q.optionA);
         updatedOptionB = escape$(q.optionB);
         updatedOptionC = escape$(q.optionC);
-        updatedExplanation = escape$(q.explanation);
+        updatedExplanation = q.explanation ? escape$(q.explanation) : null;
 
         if (
             updatedPrompt !== q.prompt ||
