@@ -61,7 +61,7 @@ function QuizContent() {
     };
 
     fetchQuestions();
-  }, [topics, mode, count, startQuiz]);
+  }, [topics, mode, count, difficulty, startQuiz]);
 
   if (isLoading) {
     return (
