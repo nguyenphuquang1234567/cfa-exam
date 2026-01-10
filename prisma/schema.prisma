@@ -292,3 +292,88 @@ model StudyPlanItem {
   isCompleted Boolean  @default(false)
   completedAt DateTime?
 }
+
+model Book {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  coverImage  String?
+  level       CFALevel?      // optional
+  readings    Reading[]
+  createdAt   DateTime  @default(now())
+}
+
+model Reading {
+  id        String   @id @default(cuid())
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  code      String   // "READING 1" (hoặc "Reading 1")
+  title     String   // "Rates and Returns" (nếu có)
+  order     Int
+
+  // optional: để trace lại nguồn trong PDF
+  pageStart Int?
+  pageEnd   Int?
+
+  createdAt DateTime @default(now())
+
+  modules   Module[]
+
+  @@unique([bookId, order])
+  @@index([bookId])
+}
+
+model Module {
+  id        String   @id @default(cuid())
+  readingId String
+  reading   Reading  @relation(fields: [readingId], references: [id], onDelete: Cascade)
+
+  // "Module 1.1"
+  code      String   // ex: "1.1"
+  title     String   // ex: "Interest Rates and Return Measurement"
+  order     Int
+
+  quizHeader ModuleQuizHeader?
+
+  @@unique([readingId, code])      // tránh trùng module trong cùng reading
+  @@index([readingId, order])
+}
+
+model ModuleQuizHeader {
+  id        String   @id @default(cuid())
+
+  moduleId  String   @unique
+  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  title     String   // e.g. "MODULE QUIZ 1.1"
+  questions ModuleQuizQuestion[]
+}
+
+model ModuleQuizQuestion {
+  id        String   @id @default(cuid())
+  headerId  String
+  header    ModuleQuizHeader @relation(fields: [headerId], references: [id], onDelete: Cascade)
+
+  questionNo Int
+  prompt    String  @db.Text
+  optionA   String  @db.Text
+  optionB   String  @db.Text
+  optionC   String  @db.Text
+  correct   AnswerChoice @default(B)
+  explanation String? @db.Text
+
+  @@unique([headerId, questionNo])
+  @@index([headerId])
+}
+
+enum AnswerChoice {
+  A
+  B
+  C
+}
+
+
+
+
+
