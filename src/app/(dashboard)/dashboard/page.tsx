@@ -59,20 +59,12 @@ const quickActions = [
     href: '/item-sets',
     color: 'from-purple-600 to-pink-600',
   },
-  {
-    title: 'Essay Practice',
-    description: 'Level III constructed response',
-    icon: GraduationCap,
-    href: '/essays',
-    color: 'from-amber-600 to-orange-600',
-  },
 ];
 
 const recentActivity = [
   { type: 'quiz', topic: 'Ethics', score: 80, date: '2 hours ago' },
   { type: 'item-set', topic: 'Fixed Income', score: 67, date: '5 hours ago' },
   { type: 'quiz', topic: 'Derivatives', score: 55, date: 'Yesterday' },
-  { type: 'essay', topic: 'Portfolio Management', score: 72, date: 'Yesterday' },
 ];
 
 const weakTopics = [
@@ -209,7 +201,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions (Bento Row) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {quickActions.map((action, index) => {
           const Icon = action.icon;
           return (

@@ -133,7 +133,17 @@ export function QuizCard({
                       option.label
                     )}
                   </div>
-                  <p className="text-foreground pt-2 font-medium">{option.value}</p>
+                  <div className="text-foreground pt-1.5 font-medium markdown-content-sm">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm, remarkMath]}
+                      rehypePlugins={[rehypeKatex]}
+                      components={{
+                        p: ({ children }) => <span className="inline-block">{children}</span>,
+                      }}
+                    >
+                      {option.value}
+                    </ReactMarkdown>
+                  </div>
                 </motion.button>
               );
             })}
