@@ -276,6 +276,15 @@ model ModuleQuizQuestion {
   @@index([headerId])
 }
 
+model ExamWindow {
+  id          String   @id
+  sessionName String   @unique
+  startDate   DateTime @db.Date
+  endDate     DateTime @db.Date
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @default(now())
+}
+
 enum CFALevel {
   LEVEL_1
   LEVEL_2
