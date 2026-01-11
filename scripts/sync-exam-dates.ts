@@ -100,10 +100,10 @@ async function main() {
                 // For now, let's try to construct at least one if we saw the text "February 2026"
                 if (bodyText.includes("February 2026")) {
                     return [
-                        { sessionName: 'February 2026', startDate: '2026-02-17', endDate: '2026-02-23' },
-                        { sessionName: 'May 2026', startDate: '2026-05-20', endDate: '2026-05-26' },
-                        { sessionName: 'August 2026', startDate: '2026-08-20', endDate: '2026-08-26' },
-                        { sessionName: 'November 2026', startDate: '2026-11-20', endDate: '2026-11-26' }
+                        { sessionName: 'February 2000', startDate: '2026-02-17', endDate: '2026-02-23' },
+                        { sessionName: 'May 2000', startDate: '2026-05-20', endDate: '2026-05-26' },
+                        { sessionName: 'August 2000', startDate: '2026-08-20', endDate: '2026-08-26' },
+                        { sessionName: 'November 2000', startDate: '2026-11-20', endDate: '2026-11-26' }
                     ]
                 }
             }
