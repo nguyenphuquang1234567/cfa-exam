@@ -26,54 +26,115 @@ async function main() {
 
         console.log('Page loaded, extracting data...');
 
-        // Scrape Data - ROBUST STRATEGY
-        // 1. Get raw text from browser (Simple, error-proof)
-        const bodyText = await page.evaluate(() => document.body.innerText);
+        // Scrape Data - FULL AUTOMATION INTERACTION
+        // 1. Select Level I
+        const levelSelectSelector = 'select[aria-label="Exam Level"]';
+        await page.waitForSelector(levelSelectSelector, { timeout: 10000 });
+        await page.select(levelSelectSelector, 'Level I');
+        console.log('Selected Level I');
 
-        console.log('Got page content, parsing in Node.js...');
+        // 2. Wait for Exam Period dropdown to populate
+        const periodSelectSelector = 'select[aria-label="Exam Period"]';
+        await page.waitForFunction(
+            (selector) => {
+                const select = document.querySelector(selector) as HTMLSelectElement;
+                return select && select.options.length > 1;
+            },
+            { timeout: 10000 },
+            periodSelectSelector
+        );
+        console.log('Exam Period dropdown populated');
 
-        // 2. Process logic in Node.js (Full TypeScript support, no serialization errors)
+        // 3. Get all available 2026 options
+        const options = await page.evaluate((selector) => {
+            const select = document.querySelector(selector) as HTMLSelectElement;
+            return Array.from(select.options)
+                .map(opt => ({ text: opt.text, value: opt.value }))
+                .filter(opt => opt.text.includes('2026'));
+        }, periodSelectSelector);
+
+        console.log(`Found ${options.length} options for 2026:`, options.map(o => o.text));
+
         const results: any[] = [];
-        const months = ['February', 'May', 'August', 'November'];
-        const currentYear = new Date().getFullYear();
-        const years = [currentYear, currentYear + 1, currentYear + 2];
 
-        years.forEach(year => {
-            months.forEach(month => {
-                const sessionName = `${month} ${year}`;
-                if (bodyText.includes(sessionName)) {
-                    // Regex to find: "Exam window: Month DD - Month DD, YYYY" or similar relative to the text
-                    // Since we lost DOM structure, we search strictly by text patterns nearby or in the whole doc
+        // 4. Iterate and scrape each option
+        for (const option of options) {
+            console.log(`Processing: ${option.text}`);
 
-                    // Pattern: "17-23 February 2026"
-                    // Matches: "17" (day1), "23" (day2) preceding the Month Year
-                    const pattern = new RegExp(`(\\d{1,2})\\s*[\\-\\u2013]\\s*(\\d{1,2})\\s+${month}\\s+${year}`, 'i');
-                    const match = bodyText.match(pattern);
+            // Select the option
+            await page.select(periodSelectSelector, option.value);
 
-                    if (match) {
-                        results.push({
-                            sessionName: sessionName,
-                            startDate: `${year}-${String(new Date(`${month} 1`).getMonth() + 1).padStart(2, '0')}-${match[1].padStart(2, '0')}`,
-                            endDate: `${year}-${String(new Date(`${month} 1`).getMonth() + 1).padStart(2, '0')}-${match[2].padStart(2, '0')}`
-                        });
+            // Wait for dynamic content to update. 
+            // We look for a container that changes. The text "CFA Program Exam Dates" is distinct.
+            // We wait for a specific element that appears in the timeline for the selected date.
+            try {
+                // Simple wait for network idle or a short pause to allow React/Angular to render
+                await new Promise(r => setTimeout(r, 2000));
+
+                // Extract dates
+                const dates = await page.evaluate(() => {
+                    const bodyText = document.body.innerText;
+                    // Look for "Month DD - Month DD, YYYY" pattern near "Exam Dates"
+                    // Or just look for the regex pattern we verified earlier: "Start Month - End Month YYYY"
+                    // Verified pattern from Subagent: "February 2 – 8, 2026"
+                    // Regex: Month DD – DD, YYYY
+                    const simpleDateRegex = /([a-zA-Z]+)\s+(\d{1,2})\s*[–-]\s*(\d{1,2}),\s*(\d{4})/;
+                    const match = bodyText.match(simpleDateRegex);
+
+                    // Also handle cross-month: "May 28 – June 3, 2026"
+                    const complexDateRegex = /([a-zA-Z]+)\s+(\d{1,2})\s*[–-]\s*([a-zA-Z]+)\s+(\d{1,2}),\s*(\d{4})/;
+                    const complexMatch = bodyText.match(complexDateRegex);
+
+                    if (complexMatch) {
+                        // Month1 DD - Month2 DD, YYYY
+                        const [_, m1, d1, m2, d2, y] = complexMatch;
+                        return {
+                            start: `${y}-${m1}-${d1}`,
+                            end: `${y}-${m2}-${d2}`
+                        };
+                    } else if (match) {
+                        // Month DD - DD, YYYY (Same month)
+                        const [_, m, d1, d2, y] = match;
+                        return {
+                            start: `${y}-${m}-${d1}`,
+                            end: `${y}-${m}-${d2}`
+                        };
                     }
-                }
-            });
-        });
+                    return null;
+                });
 
-        // FALLBACK: If regex parsing finds nothing (text structure changed)
-        let examWindows = results;
-        if (examWindows.length === 0) {
-            console.log('Parsing found no dates, checking fallbacks...');
-            if (bodyText.includes("February")) {
-                // Simulation fallback (user requested '2000' logic check)
-                examWindows = [
-                    { sessionName: 'February 2000', startDate: '2026-02-17', endDate: '2026-02-23' },
-                    { sessionName: 'May 2000', startDate: '2026-05-20', endDate: '2026-05-26' },
-                    { sessionName: 'August 2000', startDate: '2026-08-20', endDate: '2026-08-26' },
-                    { sessionName: 'November 2000', startDate: '2026-11-20', endDate: '2026-11-26' }
-                ];
+                if (dates) {
+                    // Convert to ISO (using Node context to parse properly)
+                    const startDate = new Date(dates.start).toISOString();
+                    const endDate = new Date(dates.end).toISOString();
+
+                    results.push({
+                        sessionName: option.text,
+                        startDate: startDate,
+                        endDate: endDate
+                    });
+                    console.log(`  -> Scraped: ${dates.start} to ${dates.end}`);
+                } else {
+                    console.log(`  -> No dates found for ${option.text}`);
+                }
+
+            } catch (e) {
+                console.error(`  -> Failed to scrape ${option.text}:`, e);
             }
+        }
+
+        const examWindows = results;
+
+        // Fallback if automation failed completely (e.g. selector changed)
+        if (examWindows.length === 0) {
+            console.log("Automation returned 0 results. Using Fallback.");
+            // ... fallback logic (optional, but requested to keep 2026) ...
+            return [
+                { sessionName: 'February 2020', startDate: '2026-02-17', endDate: '2026-02-23' },
+                { sessionName: 'May 2020', startDate: '2026-05-20', endDate: '2026-05-26' },
+                { sessionName: 'August 2020', startDate: '2026-08-20', endDate: '2026-08-26' },
+                { sessionName: 'November 2020', startDate: '2026-11-20', endDate: '2026-11-26' }
+            ];
         }
 
         console.log(`Found ${examWindows.length} exam windows.`);
