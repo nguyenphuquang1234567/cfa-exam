@@ -72,32 +72,59 @@ const recommendations = [
   },
 ];
 
+const formatStudyHours = (seconds: number) => {
+  return (seconds / 3600).toFixed(1);
+};
+
 export default function AnalyticsPage() {
   const { user } = useAuth();
   const [topicData, setTopicData] = useState<TopicData[]>([]);
+  const [stats, setStats] = useState({
+    totalQuestions: 0,
+    averageScore: 0,
+    weeklyTrend: 0,
+    timeSpentThisMonth: 0,
+    monthlyTimeTrend: 0,
+  });
 
   useEffect(() => {
-    const fetchTopics = async () => {
+    const fetchData = async () => {
       if (!user) return;
       try {
-        const response = await fetch(`/api/quiz/topics?userId=${user.uid}`);
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          // Transform API data to match component needs
-          const transformedData = data.map((item: any) => ({
+        // Fetch topics
+        const topicsResponse = await fetch(`/api/quiz/topics?userId=${user.uid}`);
+        const topicsData = await topicsResponse.json();
+        if (Array.isArray(topicsData)) {
+          const transformedData = topicsData.map((item: any) => ({
             name: item.name,
             accuracy: item.accuracy,
-            attempts: item.questions, // 'questions' field from API represents total questions/attempts
+            attempts: item.questions,
           }));
           setTopicData(transformedData);
         }
+
+        // Fetch user stats
+        const statsResponse = await fetch(`/api/user/stats?userId=${user.uid}`);
+        const statsData = await statsResponse.json();
+        if (!statsData.error) {
+          setStats({
+            totalQuestions: statsData.totalQuestions || 0,
+            averageScore: statsData.averageScore || 0,
+            weeklyTrend: statsData.weeklyTrend || 0,
+            timeSpentThisMonth: statsData.timeSpentThisMonth || 0,
+            monthlyTimeTrend: statsData.monthlyTimeTrend || 0,
+          });
+        }
       } catch (error) {
-        console.error('Failed to fetch topics for analytics:', error);
+        console.error('Failed to fetch analytics data:', error);
       }
     };
 
-    fetchTopics();
+    fetchData();
   }, [user]);
+
+  // Calculate mastered topics (>70% accuracy)
+  const masteredTopicsCount = topicData.filter(t => t.accuracy !== null && t.accuracy >= 70).length;
 
   return (
     <div className="space-y-8">
@@ -127,7 +154,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Total Questions"
-          value="1,560"
+          value={stats.totalQuestions.toLocaleString()}
           subtitle="All time"
           icon={BookOpen}
           color="indigo"
@@ -135,23 +162,24 @@ export default function AnalyticsPage() {
         />
         <StatsCard
           title="Overall Accuracy"
-          value="68%"
+          value={`${stats.averageScore}%`}
           icon={Target}
-          trend={{ value: 8, isPositive: true }}
+          trend={{ value: Math.abs(stats.weeklyTrend), isPositive: stats.weeklyTrend >= 0 }}
           color="emerald"
           delay={0.1}
         />
         <StatsCard
           title="Study Hours"
-          value="47.5"
+          value={formatStudyHours(stats.timeSpentThisMonth)}
           subtitle="This month"
           icon={Clock}
+          trend={{ value: Math.abs(stats.monthlyTimeTrend), isPositive: stats.monthlyTimeTrend >= 0 }}
           color="amber"
           delay={0.2}
         />
         <StatsCard
           title="Topics Mastered"
-          value="3/10"
+          value={`${masteredTopicsCount}/${topicData.length || 10}`}
           subtitle=">70% accuracy"
           icon={Award}
           color="purple"
@@ -275,12 +303,12 @@ export default function AnalyticsPage() {
                   <div className="flex items-center justify-between mb-3">
                     <span
                       className={`text-2xl font-bold ${topic.accuracy === null
-                          ? 'text-slate-500' // Gray for N/A
-                          : topic.accuracy >= 70
-                            ? 'text-emerald-400'
-                            : topic.accuracy >= 50
-                              ? 'text-amber-400'
-                              : 'text-red-400'
+                        ? 'text-slate-500' // Gray for N/A
+                        : topic.accuracy >= 70
+                          ? 'text-emerald-400'
+                          : topic.accuracy >= 50
+                            ? 'text-amber-400'
+                            : 'text-red-400'
                         }`}
                     >
                       {topic.accuracy !== null ? `${topic.accuracy}%` : 'N/A'}

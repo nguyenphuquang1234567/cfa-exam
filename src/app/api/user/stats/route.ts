@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { startOfDay, startOfWeek, endOfWeek, subWeeks, subDays, addDays, format } from 'date-fns';
+import { startOfDay, startOfWeek, endOfWeek, subWeeks, subDays, addDays, format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 export async function GET(req: Request) {
     try {
@@ -52,6 +52,38 @@ export async function GET(req: Request) {
         const averageScore = totalQuestions > 0
             ? Math.round((totalCorrect / totalQuestions) * 100)
             : 0;
+
+        // Current Month Study Time
+        const monthStart = startOfMonth(now);
+        const monthEnd = endOfMonth(now);
+        const monthProgress = await prisma.dailyProgress.aggregate({
+            where: {
+                userId,
+                date: { gte: monthStart, lte: monthEnd }
+            },
+            _sum: { timeSpent: true }
+        });
+        const timeSpentThisMonth = monthProgress._sum.timeSpent || 0;
+
+        // Last Month Study Time (for Trend)
+        const lastMonthStart = startOfMonth(subMonths(now, 1));
+        const lastMonthEnd = endOfMonth(subMonths(now, 1));
+        const lastMonthProgress = await prisma.dailyProgress.aggregate({
+            where: {
+                userId,
+                date: { gte: lastMonthStart, lte: lastMonthEnd }
+            },
+            _sum: { timeSpent: true }
+        });
+        const timeSpentLastMonth = lastMonthProgress._sum.timeSpent || 0;
+
+        // Calculate Trend %
+        let monthlyTimeTrend = 0;
+        if (timeSpentLastMonth > 0) {
+            monthlyTimeTrend = Math.round(((timeSpentThisMonth - timeSpentLastMonth) / timeSpentLastMonth) * 100);
+        } else if (timeSpentThisMonth > 0) {
+            monthlyTimeTrend = 100; // 100% growth if started from 0
+        }
 
         // Weekly Accuracy Logic
         const weekStart = startOfWeek(now, { weekStartsOn: 1 });
@@ -130,6 +162,8 @@ export async function GET(req: Request) {
             questionsToday: dailyProgress?.questionsAnswered || 0,
             correctToday: dailyProgress?.correctAnswers || 0,
             timeSpentToday: dailyProgress?.timeSpent || 0,
+            timeSpentThisMonth,
+            monthlyTimeTrend,
             averageScore,
             totalQuestions,
             weeklyAccuracy,
