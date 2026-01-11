@@ -29,7 +29,7 @@ export async function GET(req: Request) {
             questions: topic._count.questions,
             accuracy: topic.topicPerformances.length > 0
                 ? Math.round(topic.topicPerformances[0].accuracy)
-                : 100
+                : null
         }));
 
         return NextResponse.json(formattedTopics);

@@ -52,7 +52,7 @@ interface Topic {
   id: string;
   name: string;
   questions: number;
-  accuracy: number;
+  accuracy: number | null;
 }
 
 export default function QuizPage() {
@@ -219,14 +219,17 @@ export default function QuizPage() {
                         </span>
                         <Badge
                           variant={
-                            topic.accuracy >= 70
-                              ? 'success'
-                              : topic.accuracy >= 50
-                                ? 'warning'
-                                : 'destructive'
+                            topic.accuracy === null
+                              ? 'secondary'
+                              : topic.accuracy >= 70
+                                ? 'success'
+                                : topic.accuracy >= 50
+                                  ? 'warning'
+                                  : 'destructive'
                           }
+                          className={topic.accuracy === null ? 'bg-slate-700 text-slate-300' : ''}
                         >
-                          {topic.accuracy}%
+                          {topic.accuracy !== null ? `${topic.accuracy}%` : 'N/A'}
                         </Badge>
                       </div>
                     </div>

@@ -27,7 +27,7 @@ interface PerformanceData {
 
 interface TopicData {
   name: string;
-  accuracy: number;
+  accuracy: number | null;
   attempts: number;
 }
 
@@ -129,18 +129,23 @@ export function PerformanceChart({ weeklyData, topicData }: PerformanceChartProp
               formatter={(value: number) => [`${value}%`, 'Accuracy']}
             />
             <Bar dataKey="accuracy" radius={[0, 4, 4, 0]}>
-              {topicData.slice(0, 8).map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={
-                    entry.accuracy >= 70
-                      ? '#10b981'
-                      : entry.accuracy >= 50
-                        ? '#f59e0b'
-                        : '#ef4444'
-                  }
-                />
-              ))}
+              {topicData.slice(0, 8).map((entry, index) => {
+                const accuracy = entry.accuracy ?? 0;
+                return (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={
+                      entry.accuracy === null
+                        ? '#374151' // Gray for N/A
+                        : accuracy >= 70
+                          ? '#10b981'
+                          : accuracy >= 50
+                            ? '#f59e0b'
+                            : '#ef4444'
+                    }
+                  />
+                );
+              })}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
