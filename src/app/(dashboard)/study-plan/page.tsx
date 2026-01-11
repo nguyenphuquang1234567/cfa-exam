@@ -262,7 +262,7 @@ export default function StudyPlanPage() {
       >
         <StudyCalendar
           tasks={studyTasks}
-          examDate={examDate}
+          examDate={examInfo.date || new Date()}
           onTaskClick={(task) => console.log('Task clicked:', task)}
         />
       </motion.div>
