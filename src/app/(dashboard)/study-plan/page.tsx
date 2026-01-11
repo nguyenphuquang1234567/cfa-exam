@@ -19,6 +19,7 @@ import { Progress } from '@/components/ui/progress';
 import { StudyCalendar } from '@/components/study-plan/study-calendar';
 import { WeeklyTasks, WeeklyTask } from '@/components/study-plan/weekly-tasks';
 import { addDays } from 'date-fns';
+import { ExamWindowSelector } from '@/components/study-plan/exam-window-selector';
 
 // Mock task data (keep existing tasks for now)
 const today = new Date();
@@ -53,39 +54,31 @@ export default function StudyPlanPage() {
   const [currentWeek] = useState(1);
   const [examInfo, setExamInfo] = useState<{ date: Date | null; label: string; daysRemaining: number }>({
     date: null,
-    label: 'Loading...',
+    label: 'Select Exam Date',
     daysRemaining: 0,
   });
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
 
   useEffect(() => {
-    const fetchExamDate = async () => {
-      try {
-        const res = await fetch('/api/exam-date');
-        if (res.ok) {
-          const data = await res.json();
-          const examDate = new Date(data.date); // API returns ISO string
-          const now = new Date();
-          const diffTime = examDate.getTime() - now.getTime();
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Check if user has a saved preference
+    const savedDate = localStorage.getItem('cfa_exam_date');
+    const savedLabel = localStorage.getItem('cfa_exam_label');
 
-          setExamInfo({
-            date: examDate,
-            label: data.label,
-            daysRemaining: diffDays > 0 ? diffDays : 0
-          });
-        }
-      } catch (error) {
-        console.error("Failed to fetch exam date", error);
-        // Fallback or error state could go here
-        setExamInfo({
-          date: new Date('2026-02-17'),
-          label: 'Feb 17, 2026 (Est)',
-          daysRemaining: 0
-        });
-      }
-    };
+    if (savedDate && savedLabel) {
+      const date = new Date(savedDate);
+      const now = new Date();
+      const diffTime = date.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    fetchExamDate();
+      setExamInfo({
+        date: date,
+        label: savedLabel,
+        daysRemaining: diffDays > 0 ? diffDays : 0
+      });
+    } else {
+      // User hasn't selected yet -> Open Dialog
+      setIsCustomizeOpen(true);
+    }
   }, []);
 
   // Use state values or defaults
@@ -97,6 +90,22 @@ export default function StudyPlanPage() {
 
   const handleStartTask = (task: WeeklyTask) => {
     console.log('Starting task:', task);
+  };
+
+  const handleExamSelect = (date: Date, label: string) => {
+    const now = new Date();
+    const diffTime = date.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Save preference
+    localStorage.setItem('cfa_exam_date', date.toISOString());
+    localStorage.setItem('cfa_exam_label', label);
+
+    setExamInfo({
+      date,
+      label,
+      daysRemaining: diffDays > 0 ? diffDays : 0
+    });
   };
 
   return (
@@ -120,10 +129,16 @@ export default function StudyPlanPage() {
             <Bell className="h-4 w-4 mr-2" />
             Reminders
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setIsCustomizeOpen(true)}>
             <Settings className="h-4 w-4 mr-2" />
             Customize
           </Button>
+          <ExamWindowSelector
+            open={isCustomizeOpen}
+            onOpenChange={setIsCustomizeOpen}
+            currentSelectedDate={examInfo.date}
+            onSelect={handleExamSelect}
+          />
         </div>
       </div>
 
@@ -296,7 +311,7 @@ export default function StudyPlanPage() {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
+    </div >
   );
 }
 
