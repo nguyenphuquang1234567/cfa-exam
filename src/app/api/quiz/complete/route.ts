@@ -4,7 +4,7 @@ import { startOfDay, subDays, isSameDay } from 'date-fns';
 
 export async function POST(req: Request) {
     try {
-        const { userId, correctAnswers, totalQuestions, timeSpent, topics } = await req.json();
+        const { userId, correctAnswers, totalQuestions, timeSpent, topicPerformance } = await req.json();
 
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -53,7 +53,55 @@ export async function POST(req: Request) {
 
         const newLongestStreak = Math.max(newStreak, (user as any).longestStreak);
 
-        // 3. Update User and DailyProgress in a transaction
+        // Prepare TopicPerformance updates
+        const topicUpdates: any[] = [];
+        if (topicPerformance) {
+            const topicIds = Object.keys(topicPerformance);
+
+            // Fetch existing performances to calculate accuracy
+            const existingPerformances = await prisma.topicPerformance.findMany({
+                where: {
+                    userId,
+                    topicId: { in: topicIds }
+                }
+            });
+
+            const performanceMap = new Map(existingPerformances.map((p: any) => [p.topicId, p]));
+
+            for (const [topicId, stats] of Object.entries(topicPerformance) as [string, { correct: number, total: number }][]) {
+                const existing = performanceMap.get(topicId);
+                const currentTotal = (existing?.totalAttempts || 0);
+                const currentCorrect = (existing?.correctCount || 0);
+
+                const newTotal = currentTotal + stats.total;
+                const newCorrect = currentCorrect + stats.correct;
+                const newAccuracy = newTotal > 0 ? (newCorrect / newTotal) * 100 : 0;
+
+                topicUpdates.push(
+                    prisma.topicPerformance.upsert({
+                        where: {
+                            userId_topicId: { userId, topicId }
+                        },
+                        update: {
+                            totalAttempts: newTotal,
+                            correctCount: newCorrect,
+                            accuracy: newAccuracy,
+                            lastPracticed: now,
+                        },
+                        create: {
+                            userId,
+                            topicId,
+                            totalAttempts: stats.total,
+                            correctCount: stats.correct,
+                            accuracy: newAccuracy,
+                            lastPracticed: now,
+                        }
+                    })
+                );
+            }
+        }
+
+        // 3. Update User, DailyProgress, and TopicPerformance in a transaction
         await prisma.$transaction([
             // Update User streaks
             (prisma.user.update as any)({
@@ -86,7 +134,8 @@ export async function POST(req: Request) {
                     timeSpent: timeSpent || 0,
                     sessionsCount: 1,
                 }
-            })
+            }),
+            ...topicUpdates
         ]);
 
         return NextResponse.json({

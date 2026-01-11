@@ -28,6 +28,18 @@ export function QuizResults() {
     (q) => answers[q.id] === q.correctAnswer
   ).length;
 
+  const topicPerformance = questions.reduce((acc, q) => {
+    const topicId = q.topic.id;
+    if (!acc[topicId]) {
+      acc[topicId] = { correct: 0, total: 0 };
+    }
+    acc[topicId].total++;
+    if (answers[q.id] === q.correctAnswer) {
+      acc[topicId].correct++;
+    }
+    return acc;
+  }, {} as Record<string, { correct: number; total: number }>);
+
   useEffect(() => {
     const syncResults = async () => {
       if (!user || syncRef.current) return;
@@ -45,6 +57,7 @@ export function QuizResults() {
             totalQuestions: questions.length,
             timeSpent: timeSpent,
             topics: Array.from(new Set(questions.map(q => q.topic.id))),
+            topicPerformance,
           }),
         });
       } catch (error) {
@@ -53,7 +66,7 @@ export function QuizResults() {
     };
 
     syncResults();
-  }, [user, correctCount, questions, timeSpent]);
+  }, [user, correctCount, questions, timeSpent, topicPerformance]);
   const totalQuestions = questions.length;
   const score = Math.round((correctCount / totalQuestions) * 100);
 
