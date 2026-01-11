@@ -41,6 +41,7 @@ import { Typewriter } from '@/components/ui/typewriter';
 
 import { useAuth } from '@/context/auth-context';
 import { logout } from '@/lib/auth-utils';
+import { useUserStore } from '@/store/user-store';
 
 const features = [
   {
@@ -135,6 +136,7 @@ type LoadingState = 'loading' | 'exiting' | 'complete';
 
 export default function LandingPage() {
   const { user, preloaderSeen, setPreloaderSeen } = useAuth();
+  const dbUser = useUserStore((state) => state.user);
   const [loadingState, setLoadingState] = useState<LoadingState>('loading');
 
   useEffect(() => {
@@ -216,7 +218,9 @@ export default function LandingPage() {
                 <div className="hidden md:flex items-center gap-8">
                   <Link href="#mission" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Mission</Link>
                   <Link href="#features" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Features</Link>
-                  <Link href="#pricing" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Pricing</Link>
+                  {dbUser?.subscription !== 'PRO' && (
+                    <Link href="#pricing" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Pricing</Link>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -227,7 +231,10 @@ export default function LandingPage() {
                         <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/5">Dashboard</Button>
                       </Link>
                       <Button
-                        onClick={() => logout()}
+                        onClick={async () => {
+                          await logout();
+                          window.location.reload();
+                        }}
                         variant="ghost"
                         className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
                       >
@@ -662,8 +669,8 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* Pricing Section */}
-          <PricingSection />
+          {/* Pricing Section - Hide if user is PRO */}
+          {dbUser?.subscription !== 'PRO' && <PricingSection />}
 
           {/* CTA Section */}
           <section className="py-32 relative overflow-hidden">
@@ -725,7 +732,8 @@ export default function LandingPage() {
             </div>
           </footer>
         </motion.div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
