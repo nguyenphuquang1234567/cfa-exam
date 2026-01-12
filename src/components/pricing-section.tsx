@@ -129,7 +129,11 @@ export function PricingSection() {
         ];
 
     return (
-        <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "" }}>
+        <PayPalScriptProvider options={{
+            clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
+            locale: "en_US",
+            intent: "capture"
+        }}>
             <section id="pricing" className="py-24 relative overflow-hidden bg-slate-950/20">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="text-center mb-16">
