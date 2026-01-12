@@ -75,6 +75,11 @@ export default function DashboardPage() {
   const [topicData, setTopicData] = useState<TopicData[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Filter topics with accuracy < 50% (excluding N/A) for Focus Areas
   const weakTopics = topicData
@@ -166,9 +171,13 @@ export default function DashboardPage() {
           >
             Welcome Back, {displayName} 👋
           </motion.h1>
-          <p className="text-muted-foreground mt-2 text-lg">
-            It&apos;s <span className="text-indigo-400 font-semibold">{daysLeft} days</span> until your {examLabel}
-          </p>
+          {isMounted ? (
+            <p className="text-muted-foreground mt-2 text-lg">
+              It&apos;s <span className="text-indigo-400 font-semibold">{daysLeft} days</span> until your {examLabel}
+            </p>
+          ) : (
+            <div className="h-7 w-64 bg-slate-800/50 animate-pulse rounded-md mt-2" />
+          )}
         </div>
 
         <div className="grid grid-cols-2 sm:flex items-center gap-3" data-onboarding="score-cards">
