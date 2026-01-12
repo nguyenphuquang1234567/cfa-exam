@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import { startOfDay, startOfWeek, endOfWeek, subWeeks, subDays, addDays, format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { adminAuth } from '@/lib/firebase-admin';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
@@ -48,10 +50,36 @@ export async function GET(req: Request) {
         }
 
         // Use client date if provided to align with user's timezone
-        const now = clientDate ? new Date(clientDate) : new Date();
-        const today = startOfDay(now);
+        // Force UTC midnight to ensure consistency with DB storage
+        const todayStr = clientDate || new Date().toLocaleDateString('en-CA');
+        const today = new Date(todayStr + 'T00:00:00Z');
+        const now = clientDate ? today : new Date();
 
         // 1. Run independent basic stats in parallel
+        // Use UTC-based month/week boundaries to avoid server timezone shifts
+        const year = today.getUTCFullYear();
+        const month = today.getUTCMonth();
+
+        const startOfMonthUTC = new Date(Date.UTC(year, month, 1));
+        const endOfMonthUTC = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+
+        const startOfLastMonthUTC = new Date(Date.UTC(year, month - 1, 1));
+        const endOfLastMonthUTC = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+
+        // Week logic (Monday start)
+        const dayOfWeek = (today.getUTCDay() + 6) % 7; // 0=Mon, 6=Sun
+        const startOfThisWeekUTC = new Date(today);
+        startOfThisWeekUTC.setUTCDate(today.getUTCDate() - dayOfWeek);
+        const endOfThisWeekUTC = new Date(startOfThisWeekUTC);
+        endOfThisWeekUTC.setUTCDate(startOfThisWeekUTC.getUTCDate() + 6);
+        endOfThisWeekUTC.setUTCHours(23, 59, 59, 999);
+
+        const startOfLastWeekUTC = new Date(startOfThisWeekUTC);
+        startOfLastWeekUTC.setUTCDate(startOfThisWeekUTC.getUTCDate() - 7);
+        const endOfLastWeekUTC = new Date(startOfLastWeekUTC);
+        endOfLastWeekUTC.setUTCDate(startOfLastWeekUTC.getUTCDate() + 6);
+        endOfLastWeekUTC.setUTCHours(23, 59, 59, 999);
+
         const [
             dailyProgress,
             totalProgress,
@@ -59,7 +87,7 @@ export async function GET(req: Request) {
             lastMonthProgress,
             currentWeekStats,
             lastWeekStats,
-            last7DaysProgress
+            last7DaysProgressRaw
         ] = await Promise.all([
             prisma.dailyProgress.findUnique({
                 where: { userId_date: { userId, date: today } }
@@ -69,23 +97,23 @@ export async function GET(req: Request) {
                 _sum: { questionsAnswered: true, correctAnswers: true }
             }),
             prisma.dailyProgress.aggregate({
-                where: { userId, date: { gte: startOfMonth(now), lte: endOfMonth(now) } },
+                where: { userId, date: { gte: startOfMonthUTC, lte: endOfMonthUTC } },
                 _sum: { timeSpent: true }
             }),
             prisma.dailyProgress.aggregate({
-                where: { userId, date: { gte: startOfMonth(subMonths(now, 1)), lte: endOfMonth(subMonths(now, 1)) } },
+                where: { userId, date: { gte: startOfLastMonthUTC, lte: endOfLastMonthUTC } },
                 _sum: { timeSpent: true }
             }),
             prisma.dailyProgress.aggregate({
-                where: { userId, date: { gte: startOfWeek(now, { weekStartsOn: 1 }), lte: endOfWeek(now, { weekStartsOn: 1 }) } },
+                where: { userId, date: { gte: startOfThisWeekUTC, lte: endOfThisWeekUTC } },
                 _sum: { questionsAnswered: true, correctAnswers: true }
             }),
             prisma.dailyProgress.aggregate({
-                where: { userId, date: { gte: subWeeks(startOfWeek(now, { weekStartsOn: 1 }), 1), lte: subWeeks(endOfWeek(now, { weekStartsOn: 1 }), 1) } },
+                where: { userId, date: { gte: startOfLastWeekUTC, lte: endOfLastWeekUTC } },
                 _sum: { questionsAnswered: true, correctAnswers: true }
             }),
             prisma.dailyProgress.findMany({
-                where: { userId, date: { gte: subDays(startOfDay(now), 6) } },
+                where: { userId, date: { gte: subDays(today, 6), lte: today } },
                 orderBy: { date: 'asc' }
             })
         ]);
@@ -124,11 +152,11 @@ export async function GET(req: Request) {
         const weeklyTrend = weeklyAccuracy - lastWeekAccuracy;
 
         // Chart Data (Last 7 Days)
-        const sevenDaysAgo = subDays(startOfDay(now), 6);
+        const sevenDaysAgo = subDays(today, 6);
         const chartData = Array.from({ length: 7 }).map((_, i) => {
             const d = addDays(sevenDaysAgo, i);
-            const dateStr = format(d, 'yyyy-MM-dd');
-            const dayStats = last7DaysProgress.find(p => p.date.toISOString().split('T')[0] === dateStr);
+            const dateStr = d.toISOString().split('T')[0];
+            const dayStats = last7DaysProgressRaw.find(p => p.date.toISOString().split('T')[0] === dateStr);
             return {
                 date: format(d, 'EEE'),
                 accuracy: dayStats && dayStats.questionsAnswered > 0 ? Math.round((dayStats.correctAnswers / dayStats.questionsAnswered) * 100) : 0,
