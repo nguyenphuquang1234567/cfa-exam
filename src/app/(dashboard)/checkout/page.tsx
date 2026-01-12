@@ -28,18 +28,6 @@ function CheckoutContent() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
 
-    const [formData, setFormData] = useState({
-        cardNumber: '',
-        expiry: '',
-        cvc: '',
-        name: ''
-    });
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { id, value } = e.target;
-        setFormData(prev => ({ ...prev, [id]: value }));
-    };
-
     const handleApprove = async (orderID: string) => {
         setIsProcessing(true);
         try {
