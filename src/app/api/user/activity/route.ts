@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { adminAuth } from '@/lib/firebase-admin';
 import { formatDistanceToNow } from 'date-fns';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
@@ -40,7 +42,7 @@ export async function GET(req: Request) {
             }
         });
 
-        const activities = recentTopics.map(tp => {
+        const activities = recentTopics.map((tp: any) => {
             return {
                 type: 'Topic',
                 topic: tp.topic.name,

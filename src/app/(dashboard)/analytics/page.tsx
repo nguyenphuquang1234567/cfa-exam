@@ -32,7 +32,10 @@ interface TopicData {
 }
 
 const formatStudyHours = (seconds: number) => {
-  return (seconds / 3600).toFixed(1);
+  if (seconds < 3600 && seconds > 0) {
+    return `${Math.round(seconds / 60)}m`;
+  }
+  return `${(seconds / 3600).toFixed(1)}h`;
 };
 
 export default function AnalyticsPage() {

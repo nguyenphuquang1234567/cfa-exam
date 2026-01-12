@@ -58,4 +58,11 @@ export function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+export function getLocalDate(): string {
+  return new Date().toLocaleDateString('en-CA');
+}
 
+export function getUTCMidnight(date?: string | Date): Date {
+  const d = date ? (typeof date === 'string' ? date : date.toLocaleDateString('en-CA')) : getLocalDate();
+  return new Date(d + 'T00:00:00Z');
+}

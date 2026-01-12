@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { format } from 'date-fns';
 import { verifyAuth, authErrorResponse } from '@/lib/server-auth-utils';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
@@ -25,10 +27,6 @@ export async function GET(req: Request) {
         });
 
         const history = attempts.map(attempt => {
-            // Determine "Started at" - approximate using completedAt - (questions * time per question?)
-            // Actually we store `startedAt` in DB now (if newly created).
-            // For old records without startedAt, use completedAt.
-
             return {
                 id: attempt.id,
                 mode: attempt.mode, // 'PRACTICE', 'TIMED'

@@ -31,25 +31,34 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
+        const todayStr = date || new Date().toLocaleDateString('en-CA');
+        const today = new Date(todayStr + 'T00:00:00Z');
         const now = new Date();
-        const today = date ? new Date(date) : startOfDay(now);
-        let newStreak = user.currentStreak;
 
-        // 2. Logic to update Streak
-        if (!user.lastActiveAt) {
+        const lastActiveDateStr = user.lastActiveAt
+            ? new Date(user.lastActiveAt).toLocaleDateString('en-CA')
+            : null;
+
+        let newStreak = user.currentStreak || 0;
+
+        if (!lastActiveDateStr) {
+            // First time ever
             newStreak = 1;
+        } else if (todayStr === lastActiveDateStr) {
+            // Already active today, maintain streak (ensure it's at least 1)
+            newStreak = Math.max(user.currentStreak || 0, 1);
         } else {
-            const lastActiveDate = startOfDay(new Date(user.lastActiveAt));
+            // Different day, check if it was yesterday
+            const yesterdayDate = new Date(today);
+            yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
+            const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
 
-            if (isSameDay(today, lastActiveDate)) {
-                newStreak = user.currentStreak;
+            if (lastActiveDateStr === yesterdayStr) {
+                // Consecutive day
+                newStreak = (user.currentStreak || 0) + 1;
             } else {
-                const yesterday = startOfDay(subDays(today, 1));
-                if (isSameDay(lastActiveDate, yesterday)) {
-                    newStreak = user.currentStreak + 1;
-                } else if (lastActiveDate < yesterday) {
-                    newStreak = 1;
-                }
+                // Streak broken
+                newStreak = 1;
             }
         }
 
@@ -57,9 +66,7 @@ export async function POST(req: Request) {
 
         // Prepare TopicPerformance updates
         const topicUpdates: any[] = [];
-        /* 
-        // DISABLED per user request: Only update DailyProgress, not TopicPerformance
-        if (topicPerformance) {
+        if (topicPerformance && typeof topicPerformance === 'object') {
             const topicIds = Object.keys(topicPerformance);
 
             const existingPerformances = await prisma.topicPerformance.findMany({
@@ -103,7 +110,6 @@ export async function POST(req: Request) {
                 );
             }
         }
-        */
 
         // Create QuizAttempt
         // We'll create it even if we don't have detailed questionsData, just to track history.

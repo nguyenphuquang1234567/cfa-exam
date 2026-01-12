@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { adminAuth } from '@/lib/firebase-admin';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
@@ -39,7 +41,7 @@ export async function GET(req: Request) {
             orderBy: { order: 'asc' }
         });
 
-        const formattedTopics = topics.map(topic => ({
+        const formattedTopics = topics.map((topic: any) => ({
             id: topic.slug,
             name: topic.name,
             questions: topic._count.questions,

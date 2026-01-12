@@ -59,12 +59,16 @@ export default function StudyPlanPage() {
     }
   }, [loading, plan, storedExamDate]);
 
-  const daysLeft = plan?.examDate ? differenceInDays(new Date(plan.examDate), new Date()) : daysRemaining();
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const today = new Date(todayStr + 'T00:00:00Z');
+
+  const daysLeft = plan?.examDate ? Math.round((new Date(new Date(plan.examDate).toLocaleDateString('en-CA') + 'T00:00:00Z').getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : daysRemaining();
   const weeksUntilExam = Math.max(Math.ceil(daysLeft / 7), 1);
 
   // Calculate current week (simple version: based on time passed since plan start)
-  const startDate = plan?.startDate ? new Date(plan.startDate) : new Date();
-  const currentWeek = Math.min(Math.max(differenceInDays(new Date(), startDate) / 7 + 1, 1), weeksUntilExam);
+  const startDateStr = plan?.startDate ? new Date(plan.startDate).toLocaleDateString('en-CA') : todayStr;
+  const startDate = new Date(startDateStr + 'T00:00:00Z');
+  const currentWeek = Math.min(Math.max(Math.round((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) / 7 + 1, 1), weeksUntilExam);
 
   // Map real data to component interfaces
   const allTasks = plan?.items.map((item: any) => ({

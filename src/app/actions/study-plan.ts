@@ -41,23 +41,24 @@ export async function updateStudyPlanExamDate(userId: string, examDate: Date) {
     });
 
     // 4. Calculate distributions
-    const startDate = new Date();
-    const totalWeeks = Math.max(differenceInWeeks(examDate, startDate), 4); // Assume at least 4 weeks for a valid plan
-    const reviewWeeks = Math.min(Math.max(Math.floor(totalWeeks * 0.2), 1), 4); // At least 1 week review
-    const learningWeeks = Math.max(totalWeeks - reviewWeeks, 1); // At least 1 week learning
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    const startDate = new Date(todayStr + 'T00:00:00Z');
 
-    // Distribute topics over learning weeks
-    // Simple distribution: topics / learningWeeks
+    // Normalize examDate to UTC midnight
+    const examDateStr = new Date(examDate).toLocaleDateString('en-CA');
+    const targetExamDate = new Date(examDateStr + 'T00:00:00Z');
+
+    const totalWeeks = Math.max(differenceInWeeks(targetExamDate, startDate), 4);
+    const reviewWeeks = Math.min(Math.max(Math.floor(totalWeeks * 0.2), 1), 4);
+    const learningWeeks = Math.max(totalWeeks - reviewWeeks, 1);
+
     for (let i = 0; i < topics.length; i++) {
         const topic = topics[i];
-
-        // Calculate which week this topic belongs to
-        // We spread topics evenly across learning weeks
         const weekIndex = Math.min(Math.floor((i / topics.length) * learningWeeks), learningWeeks - 1);
         const weekNumber = weekIndex + 1;
 
         // Target date is the end of that week
-        const targetDate = addDays(startOfWeek(startDate), (weekNumber * 7) - 1);
+        const targetDate = addDays(startOfWeek(startDate, { weekStartsOn: 1 }), (weekNumber * 7) - 1);
 
         await prisma.studyPlanItem.create({
             data: {

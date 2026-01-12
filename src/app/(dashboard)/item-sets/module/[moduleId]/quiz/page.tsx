@@ -18,18 +18,12 @@ import { QuizResults } from '@/components/quiz/quiz-results';
 import { useQuizStore } from '@/store/quiz-store';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
+import { useAuthenticatedSWR } from '@/hooks/use-authenticated-swr';
 
 function ModuleQuizContent() {
     const { user } = useAuth();
     const { moduleId } = useParams();
     const router = useRouter();
-    const [isLoading, setIsLoading] = useState(true);
-    const [moduleInfo, setModuleInfo] = useState<{
-        title: string,
-        code: string,
-        readingId?: string,
-        bookId?: string
-    } | null>(null);
 
     const {
         questions,
@@ -45,39 +39,24 @@ function ModuleQuizContent() {
         toggleExplanation,
     } = useQuizStore();
 
+    const { data, isLoading: swrLoading } = useAuthenticatedSWR<any>(
+        user && moduleId ? `/api/quiz/module/${moduleId}` : null
+    );
+
     useEffect(() => {
-        const fetchModuleQuizzes = async () => {
-            if (!user) return;
-            setIsLoading(true);
-            try {
-                const token = await user.getIdToken();
-                const response = await fetch(`/api/quiz/module/${moduleId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const data = await response.json();
-
-                if (data.error) throw new Error(data.error);
-
-                setModuleInfo({
-                    title: data.moduleTitle,
-                    code: data.moduleCode,
-                    readingId: data.readingId,
-                    bookId: data.bookId
-                });
-                startQuiz(moduleId as string, data.questions, 'PRACTICE');
-            } catch (error) {
-                console.error('Failed to load module quizzes:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        if (moduleId && user) {
-            fetchModuleQuizzes();
+        if (data && !data.error && moduleId) {
+            startQuiz(moduleId as string, data.questions, 'PRACTICE');
         }
-    }, [moduleId, user, startQuiz]);
+    }, [data, moduleId, startQuiz]);
+
+    const isLoading = swrLoading || !data;
+
+    const moduleInfo = data ? {
+        title: data.moduleTitle,
+        code: data.moduleCode,
+        readingId: data.readingId,
+        bookId: data.bookId
+    } : null;
 
     if (isLoading || !user) {
         return (
