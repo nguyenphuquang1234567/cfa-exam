@@ -87,11 +87,16 @@ export default function DashboardPage() {
     const fetchStats = async () => {
       if (!user) return;
       try {
+        const token = await user.getIdToken();
+        const headers = {
+          'Authorization': `Bearer ${token}`
+        };
+
         // Get local date string for timezone-safe stats (Jan 12, 2026 -> 2026-01-12)
         const localDate = new Date().toLocaleDateString('en-CA');
 
         // Fetch user stats
-        const statsRes = await fetch(`/api/user/stats?userId=${user.uid}&date=${localDate}`);
+        const statsRes = await fetch(`/api/user/stats?userId=${user.uid}&date=${localDate}`, { headers });
         const statsData = await statsRes.json();
         if (!statsData.error) {
           setStats(statsData);
@@ -101,7 +106,7 @@ export default function DashboardPage() {
         }
 
         // Fetch topic data
-        const topicsRes = await fetch(`/api/quiz/topics?userId=${user.uid}`);
+        const topicsRes = await fetch(`/api/quiz/topics?userId=${user.uid}`, { headers });
         const topicsData = await topicsRes.json();
         if (Array.isArray(topicsData)) {
           const transformedTopics = topicsData.map((topic: any) => ({
@@ -113,7 +118,7 @@ export default function DashboardPage() {
         }
 
         // Fetch recent activity
-        const activityRes = await fetch(`/api/user/activity?userId=${user.uid}`);
+        const activityRes = await fetch(`/api/user/activity?userId=${user.uid}`, { headers });
         const activityData = await activityRes.json();
         if (Array.isArray(activityData)) {
           setRecentActivity(activityData);
