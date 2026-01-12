@@ -29,14 +29,22 @@ function CheckoutContent() {
     const [isSuccess, setIsSuccess] = useState(false);
 
     const handleApprove = async (orderID: string) => {
+        if (!user) {
+            alert('You must be logged in to complete payment.');
+            return;
+        }
         setIsProcessing(true);
         try {
+            const token = await user.getIdToken();
             const response = await fetch('/api/paypal/capture-order', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     orderID,
-                    userId: user?.uid,
+                    userId: user.uid,
                     planName: planName,
                 }),
             });

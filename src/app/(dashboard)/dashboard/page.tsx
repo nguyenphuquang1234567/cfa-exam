@@ -93,17 +93,7 @@ export default function DashboardPage() {
       try {
         console.log('Fetching ID token for user:', user.uid);
         const token = await user.getIdToken(true);
-        console.log('Token successfully fetched (length):', token?.length);
-
-        // --- Lệnh bí mật để bro test ---
-        (window as any).getToken = async () => {
-          const t = await user.getIdToken(true);
-          console.log("CHÌA KHÓA (TOKEN) CỦA BRO ĐÂY:");
-          console.log(t);
-          return t;
-        };
-        console.log("💡 Gõ 'await getToken()' vào console để lấy token!");
-        // ------------------------------
+        console.log('Token successfully fetched');
 
         const headers = {
           'Authorization': `Bearer ${token}`,
