@@ -120,6 +120,9 @@ model QuizAttempt {
   correctAnswers Int            @default(0)
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   questions      QuizQuestion[]
+
+  @@index([userId])
+  @@index([userId, startedAt(sort: Desc)])
 }
 
 model QuizQuestion {
@@ -147,6 +150,8 @@ model ItemSetAttempt {
   answers        ItemSetAnswer[]
   itemSet        ItemSet         @relation(fields: [itemSetId], references: [id])
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model ItemSetAnswer {
@@ -199,6 +204,8 @@ model StudyPlan {
   createdAt DateTime        @default(now())
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   items     StudyPlanItem[]
+
+  @@index([userId])
 }
 
 model StudyPlanItem {
