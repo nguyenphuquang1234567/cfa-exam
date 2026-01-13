@@ -40,6 +40,7 @@ interface QuizState {
   startTime: number | null;
   timeSpent: number; // in seconds
   flaggedQuestions: string[];
+  isSynced: boolean;
 
   // Actions
   startQuiz: (quizId: string | null, questions: QuizQuestion[], mode: 'PRACTICE' | 'TIMED' | 'EXAM', timeLimit?: number, studyPlanItemId?: string | null) => void;
@@ -49,6 +50,7 @@ interface QuizState {
   prevQuestion: () => void;
   goToQuestion: (index: number) => void;
   submitQuiz: () => void;
+  setSynced: (synced: boolean) => void;
   resetQuiz: () => void;
   toggleExplanation: () => void;
   tick: () => void;
@@ -75,6 +77,7 @@ export const useQuizStore = create<QuizState>()(
       showExplanation: false,
       startTime: null,
       timeSpent: 0,
+      isSynced: false,
 
       flaggedQuestions: [],
       startQuiz: (quizId, questions, mode, timeLimit, studyPlanItemId) => {
@@ -102,6 +105,7 @@ export const useQuizStore = create<QuizState>()(
           timeRemaining: upperMode === 'PRACTICE' ? 0 : time,
           isTimerRunning: upperMode !== 'PRACTICE',
           isCompleted: false,
+          isSynced: false,
           showExplanation: false,
           startTime: Date.now(),
           timeSpent: 0,
@@ -152,9 +156,14 @@ export const useQuizStore = create<QuizState>()(
         const timeSpent = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
         set({
           isCompleted: true,
+          isActive: false, // Mark as inactive once completed
           isTimerRunning: false,
           timeSpent,
         });
+      },
+
+      setSynced: (synced: boolean) => {
+        set({ isSynced: synced });
       },
 
       resetQuiz: () => {
@@ -170,6 +179,7 @@ export const useQuizStore = create<QuizState>()(
           timeRemaining: 0,
           isTimerRunning: false,
           isCompleted: false,
+          isSynced: false,
           showExplanation: false,
           studyPlanItemId: null,
         });
@@ -209,6 +219,7 @@ export const useQuizStore = create<QuizState>()(
         flaggedQuestions: state.flaggedQuestions,
         timeRemaining: state.timeRemaining,
         isCompleted: state.isCompleted,
+        isSynced: state.isSynced,
         startTime: state.startTime,
         timeSpent: state.timeSpent,
         studyPlanItemId: state.studyPlanItemId,

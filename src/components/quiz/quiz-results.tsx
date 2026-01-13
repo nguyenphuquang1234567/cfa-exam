@@ -20,7 +20,7 @@ import { useEffect, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
 
 export function QuizResults() {
-  const { questions, answers, resetQuiz, timeSpent, mode, studyPlanItemId } = useQuizStore();
+  const { questions, answers, resetQuiz, timeSpent, mode, studyPlanItemId, isSynced, setSynced } = useQuizStore();
   const { user } = useAuth();
   const syncRef = useRef(false);
 
@@ -42,12 +42,12 @@ export function QuizResults() {
 
   useEffect(() => {
     const syncResults = async () => {
-      if (!user || syncRef.current) return;
+      if (!user || syncRef.current || isSynced) return;
       syncRef.current = true;
 
       try {
         const token = await user.getIdToken();
-        await fetch('/api/quiz/complete', {
+        const response = await fetch('/api/quiz/complete', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -68,13 +68,17 @@ export function QuizResults() {
             isModuleQuiz: questions.some(q => q.isModuleQuiz),
           }),
         });
+
+        if (response.ok) {
+          setSynced(true);
+        }
       } catch (error) {
         console.error('Failed to sync quiz results:', error);
       }
     };
 
     syncResults();
-  }, [user, correctCount, questions, timeSpent, topicPerformance]);
+  }, [user, correctCount, questions, timeSpent, topicPerformance, isSynced, setSynced]);
   const totalQuestions = questions.length;
   const score = Math.round((correctCount / totalQuestions) * 100);
 
@@ -244,13 +248,13 @@ export function QuizResults() {
           Try Again
         </Button>
         <Link href="/quiz" className="flex-1">
-          <Button variant="secondary" className="w-full">
+          <Button variant="secondary" className="w-full" onClick={resetQuiz}>
             <BookOpen className="h-4 w-4 mr-2" />
             New Quiz
           </Button>
         </Link>
         <Link href="/dashboard" className="flex-1">
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full" onClick={resetQuiz}>
             <Home className="h-4 w-4 mr-2" />
             Dashboard
           </Button>

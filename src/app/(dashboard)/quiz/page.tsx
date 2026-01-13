@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthenticatedSWR } from '@/hooks/use-authenticated-swr';
+import { useUserStore } from '@/store/user-store';
+import { Lock } from 'lucide-react';
 
 const quizModes = [
   {
@@ -59,6 +61,8 @@ interface QuizHistoryItem {
 
 export default function QuizPage() {
   const { user } = useAuth();
+  const userProfile = useUserStore((state) => state.user);
+  const isFreeUser = userProfile?.subscription === 'FREE';
   const [isMounted, setIsMounted] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [selectedMode, setSelectedMode] = useState('practice');
@@ -99,7 +103,7 @@ export default function QuizPage() {
 
   const startQuiz = () => {
     if (selectedTopics.length === 0) return;
-    window.location.href = `/quiz/session?topics=${selectedTopics.join(',')}&mode=${selectedMode}&count=${questionCount}&difficulty=${difficulty}`;
+    window.location.href = `/quiz/session?topics=${selectedTopics.join(',')}&mode=${selectedMode}&count=${questionCount}&difficulty=${difficulty}&v=${Date.now()}`;
   };
 
   if (!isMounted) return null;
@@ -235,14 +239,8 @@ export default function QuizPage() {
                             {topic.questions} Qs
                           </span>
                           <Badge
-                            className={`text-[10px] font-black font-mono min-w-[45px] justify-center ${topic.accuracy === null
-                              ? 'bg-slate-800 text-slate-500'
-                              : topic.accuracy >= 70
-                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                                : topic.accuracy >= 50
-                                  ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                                  : 'bg-red-500/10 text-red-500 border-red-500/20'
-                              }`}
+                            variant={topic.accuracy === null ? "default" : topic.accuracy >= 70 ? "success" : topic.accuracy >= 50 ? "warning" : "destructive"}
+                            className="text-[10px] font-black font-mono min-w-[45px] justify-center"
                           >
                             {topic.accuracy !== null ? `${topic.accuracy}%` : 'N/A'}
                           </Badge>
@@ -277,9 +275,24 @@ export default function QuizPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="10">10 Questions</SelectItem>
-                      <SelectItem value="20">20 Questions</SelectItem>
-                      <SelectItem value="30">30 Questions</SelectItem>
-                      <SelectItem value="50">50 Questions</SelectItem>
+                      <SelectItem value="20" disabled={isFreeUser}>
+                        <div className="flex items-center justify-between w-full gap-2">
+                          <span>20 Questions</span>
+                          {isFreeUser && <Badge variant="secondary" className="bg-slate-800 text-slate-400 text-[8px] h-4 px-1 border-slate-700 ml-auto">PRO</Badge>}
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="30" disabled={isFreeUser}>
+                        <div className="flex items-center justify-between w-full gap-2">
+                          <span>30 Questions</span>
+                          {isFreeUser && <Badge variant="secondary" className="bg-slate-800 text-slate-400 text-[8px] h-4 px-1 border-slate-700 ml-auto">PRO</Badge>}
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="50" disabled={isFreeUser}>
+                        <div className="flex items-center justify-between w-full gap-2">
+                          <span>50 Questions</span>
+                          {isFreeUser && <Badge variant="secondary" className="bg-slate-800 text-slate-400 text-[8px] h-4 px-1 border-slate-700 ml-auto">PRO</Badge>}
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -320,7 +333,7 @@ export default function QuizPage() {
                     onClick={() => {
                       if (!topics) return;
                       const allTopicIds = topics.map((t) => t.id);
-                      window.location.href = `/quiz/session?topics=${allTopicIds.join(',')}&mode=${selectedMode}&count=${questionCount}&difficulty=${difficulty}`;
+                      window.location.href = `/quiz/session?topics=${allTopicIds.join(',')}&mode=${selectedMode}&count=${questionCount}&difficulty=${difficulty}&v=${Date.now()}`;
                     }}
                   >
                     <Shuffle className="h-5 w-5 mr-3" />
@@ -329,27 +342,33 @@ export default function QuizPage() {
                 </div>
 
                 {/* Mock Exam Promo */}
-                <div className="relative group p-[2px] rounded-3xl bg-gradient-to-r from-red-600 via-rose-500 to-red-600">
+                <div className={`relative group p-[2px] rounded-3xl bg-gradient-to-r ${isFreeUser ? 'from-slate-700 to-slate-800' : 'from-red-600 via-rose-500 to-red-600'}`}>
                   <Button
                     size="lg"
-                    className="relative w-full bg-slate-950 hover:bg-slate-900 text-white border-none h-20 rounded-[22px] transition-all"
+                    className={`relative w-full bg-slate-950 hover:bg-slate-900 text-white border-none h-20 rounded-[22px] transition-all ${isFreeUser ? 'opacity-70 cursor-not-allowed' : ''}`}
                     onClick={() => {
+                      if (isFreeUser) return;
                       if (!topics) return;
                       const allTopicIds = topics.map((t) => t.id);
                       window.location.href = `/quiz/session?topics=${allTopicIds.join(',')}&mode=exam&count=180&difficulty=all`;
                     }}
+                    disabled={isFreeUser}
                   >
                     <div className="flex items-center justify-between w-full px-4">
                       <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-2xl bg-red-500/10">
-                          <Zap className="h-6 w-6 text-red-500 fill-red-500" />
+                        <div className={`p-3 rounded-2xl ${isFreeUser ? 'bg-slate-800' : 'bg-red-500/10'}`}>
+                          {isFreeUser ? (
+                            <Lock className="h-6 w-6 text-slate-500" />
+                          ) : (
+                            <Zap className="h-6 w-6 text-red-500 fill-red-500" />
+                          )}
                         </div>
                         <div className="text-left">
-                          <div className="text-xl font-black tracking-tight leading-none mb-1 uppercase">Full Mock Exam</div>
+                          <div className={`text-xl font-black tracking-tight leading-none mb-1 uppercase ${isFreeUser ? 'text-slate-500' : 'text-white'}`}>Full Mock Exam</div>
                           <div className="text-xs text-muted-foreground font-medium">180 Questions • All Topics • Exam Setting</div>
                         </div>
                       </div>
-                      <Badge className="bg-red-500/20 text-red-400 border-red-500/30 font-black">PRO</Badge>
+                      <Badge className={`${isFreeUser ? 'bg-slate-800 text-slate-500 border-slate-700' : 'bg-red-500/20 text-red-400 border-red-500/30'} font-black`}>PRO</Badge>
                     </div>
                   </Button>
                 </div>
@@ -396,12 +415,8 @@ export default function QuizPage() {
                     </div>
                   </div>
                   <Badge
-                    className={`text-sm font-black font-mono min-w-[50px] justify-center ${quiz.score >= 70
-                      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                      : quiz.score >= 50
-                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                        : 'bg-red-500/10 text-red-500 border-red-500/20'
-                      }`}
+                    variant={quiz.score >= 70 ? "success" : quiz.score >= 50 ? "warning" : "destructive"}
+                    className="text-sm font-black font-mono min-w-[50px] justify-center"
                   >
                     {quiz.score}%
                   </Badge>
