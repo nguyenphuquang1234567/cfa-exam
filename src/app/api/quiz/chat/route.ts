@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { rateLimit } from '@/lib/rate-limit';
+import { verifyAuth, authErrorResponse } from '@/lib/server-auth-utils';
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -7,6 +9,13 @@ const openai = new OpenAI({
 
 export async function POST(req: NextRequest) {
     try {
+        // 1. Verify Authentication
+        const authResult = await verifyAuth(req);
+        if (authResult.error) {
+            return authErrorResponse(authResult as { error: string, status: number });
+        }
+        const userId = authResult.uid;
+
         const body = await req.json();
         const { messages, question, explanation, topic } = body;
 

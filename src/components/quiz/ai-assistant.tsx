@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 
+import { useAuth } from '@/context/auth-context';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -25,6 +26,7 @@ interface QuizAIAssistantProps {
 }
 
 export function QuizAIAssistant({ question, explanation, topic, currentIndex }: QuizAIAssistantProps) {
+    const { user } = useAuth();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +46,7 @@ export function QuizAIAssistant({ question, explanation, topic, currentIndex }: 
     }, [messages, isLoading]);
 
     const handleSend = async () => {
-        if (!input.trim() || isLoading) return;
+        if (!input.trim() || isLoading || !user) return;
 
         const userMessage = input.trim();
         setInput('');
@@ -53,9 +55,13 @@ export function QuizAIAssistant({ question, explanation, topic, currentIndex }: 
         setIsLoading(true);
 
         try {
+            const token = await user.getIdToken();
             const response = await fetch('/api/quiz/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     messages: newMessages,
                     question,
@@ -183,9 +189,6 @@ export function QuizAIAssistant({ question, explanation, topic, currentIndex }: 
                         <Send className="w-4 h-4" />
                     </Button>
                 </form>
-                <p className="text-[10px] text-center text-muted-foreground mt-3 uppercase tracking-tighter">
-                    Powered by GPT-5 Nano • Specific to current question
-                </p>
             </div>
         </Card>
     );
