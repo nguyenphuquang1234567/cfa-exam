@@ -60,8 +60,7 @@ Format your response as JSON:
         },
         { role: 'user', content: prompt },
       ],
-      temperature: 0.7,
-      max_tokens: 1000,
+      max_completion_tokens: 1000,
     });
 
     const content = completion.choices[0]?.message?.content || '';
@@ -104,8 +103,7 @@ Provide actionable recommendations focusing on weak areas. Format as a JSON arra
         },
         { role: 'user', content: prompt },
       ],
-      temperature: 0.7,
-      max_tokens: 500,
+      max_completion_tokens: 500,
     });
 
     const content = completion.choices[0]?.message?.content || '';
