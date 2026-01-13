@@ -33,14 +33,6 @@ export function CurriculumSection({ user }: CurriculumSectionProps) {
 
                 <div className="flex justify-center max-w-lg mx-auto">
                     {levels.map((level, index) => {
-                        const badgeColors = {
-                            level1: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
-                            level2: "bg-violet-500/10 text-violet-400 border-violet-500/20",
-                            level3: "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                        }[level.color];
-
-                        const glowVariant = "indigo";
-
                         return (
                             <motion.div
                                 key={level.level}
@@ -50,24 +42,24 @@ export function CurriculumSection({ user }: CurriculumSectionProps) {
                                 transition={{ delay: index * 0.1 }}
                                 className="group relative rounded-3xl overflow-hidden w-full"
                             >
-                                <GlowingEffect variant={glowVariant as any} />
-                                <div className="h-full relative p-8 rounded-3xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 backdrop-blur-sm transition-all duration-300 group-hover:bg-slate-50 dark:group-hover:bg-slate-900/60 flex flex-col shadow-sm">
+                                <GlowingEffect variant="rose" />
+                                <div className="h-full relative p-8 rounded-3xl bg-purple-400 dark:bg-slate-900/40 border border-purple-600/50 dark:border-white/5 backdrop-blur-sm transition-all duration-300 group-hover:bg-purple-500 dark:group-hover:bg-slate-900/60 flex flex-col shadow-sm">
                                     <div className="flex justify-start mb-6">
-                                        <Badge className={`${badgeColors} dark:border px-3 py-1 font-medium rounded-full text-xs`}>
+                                        <Badge className="bg-purple-700 text-white dark:bg-indigo-500/10 dark:text-indigo-400 border-none px-3 py-1 font-medium rounded-full text-xs">
                                             {level.level}
                                         </Badge>
                                     </div>
 
-                                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+                                    <h3 className="text-2xl font-bold text-purple-950 dark:text-white mb-4">
                                         CFA {level.level}
                                     </h3>
 
-                                    <p className="text-slate-600 dark:text-slate-400 text-sm mb-10 leading-relaxed flex-grow">
+                                    <p className="text-purple-950 dark:text-slate-400 text-sm mb-10 leading-relaxed font-bold flex-grow">
                                         {level.topics}
                                     </p>
 
                                     <Link href={user ? "/dashboard" : "/login"} className="block w-full mt-auto">
-                                        <Button variant="outline" className="w-full h-12 border-slate-200 dark:border-white/10 hover:border-indigo-500/30 dark:hover:border-white/20 hover:bg-indigo-50 dark:hover:bg-white/5 text-slate-900 dark:text-white font-medium flex items-center justify-center gap-2 rounded-xl transition-all">
+                                        <Button variant="outline" className="w-full h-12 border-purple-700 light:bg-white/80 dark:border-white/10 hover:border-purple-800 dark:hover:border-white/20 hover:bg-white dark:hover:bg-white/5 text-purple-950 dark:text-white font-black flex items-center justify-center gap-2 rounded-xl transition-all shadow-lg shadow-purple-900/20">
                                             Start {level.level}
                                             <ChevronRight className="h-4 w-4" />
                                         </Button>

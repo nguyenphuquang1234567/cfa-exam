@@ -65,10 +65,10 @@ export function FeaturesSection() {
                         title="Dynamic Study Planner"
                         description="3-month structured roadmap tailored to your exam date."
                         icon={Calendar}
-                        iconColor="text-rose-400"
+                        iconColor="text-cyan-400"
                         className="md:col-span-2"
                         delay={0.3}
-                        glowingVariant="rose"
+                        glowingVariant="cyan"
                     >
                         <MockPlanner />
                     </FeatureCard>
@@ -109,10 +109,10 @@ export function FeaturesSection() {
                         title="AI Explanations"
                         description="Get instant, personalized explanations for any concept."
                         icon={Sparkles}
-                        iconColor="text-cyan-400"
+                        iconColor="text-indigo-400"
                         className="md:col-span-1"
                         delay={0.5}
-                        glowingVariant="cyan"
+                        glowingVariant="indigo"
                     >
                         <div className="absolute inset-0 flex items-center justify-center p-6">
                             <div className="bg-white dark:bg-slate-900 border border-indigo-500/20 dark:border-indigo-500/30 rounded-2xl p-4 w-full max-w-[250px] shadow-lg">
