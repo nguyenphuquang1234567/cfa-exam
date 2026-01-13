@@ -85,15 +85,31 @@ export async function POST(request: Request) {
                     break;
             }
 
-            // Update user in DB
-            await prisma.user.update({
-                where: { id: userId },
-                data: {
-                    subscription: 'PRO',
-                    subscriptionEndsAt: endsAt,
-                    updatedAt: new Date(),
-                },
-            });
+            // Extract amount from PayPal data
+            const amount = parseFloat(data.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value || '0');
+            const currency = data.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.currency_code || 'USD';
+
+            // Update user and record transaction in a single DB transaction
+            await prisma.$transaction([
+                prisma.user.update({
+                    where: { id: userId },
+                    data: {
+                        subscription: 'PRO',
+                        subscriptionEndsAt: endsAt,
+                        updatedAt: new Date(),
+                    },
+                }),
+                prisma.transaction.create({
+                    data: {
+                        userId,
+                        orderId: orderID,
+                        planName,
+                        amount,
+                        currency,
+                        status: 'COMPLETED',
+                    }
+                })
+            ]);
 
             return NextResponse.json({ success: true, status: 'COMPLETED' });
         } else {
