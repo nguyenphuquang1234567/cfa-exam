@@ -8,9 +8,31 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const topics = searchParams.get('topics');
-    const count = parseInt(searchParams.get('count') || '10');
+    const requestedCount = parseInt(searchParams.get('count') || '10');
     const difficulty = searchParams.get('difficulty');
     const mode = searchParams.get('mode');
+
+    // --- Subscription Check ---
+    const user = await prisma.user.findUnique({
+        where: { id: authResult.uid },
+        select: { subscription: true }
+    });
+
+    const isFree = !user || user.subscription === 'FREE';
+
+    // --- Access Control Logic ---
+    if (isFree) {
+        // 1. Block EXAM mode entirely
+        if (mode === 'EXAM' || mode === 'exam') {
+            return NextResponse.json({ error: 'Exam mode is only available for PRO users' }, { status: 403 });
+        }
+        // 2. Limit PRACTICE/TIMED to 10 questions
+        if (requestedCount > 10) {
+            return NextResponse.json({ error: 'FREE users are limited to 10 questions per session' }, { status: 403 });
+        }
+    }
+
+    const count = requestedCount;
 
     try {
         // EXAM MODE LOGIC (Weighted Distribution)
