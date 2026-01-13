@@ -38,11 +38,11 @@ export default function LandingPage() {
       return;
     }
 
-    const exitTimer = setTimeout(() => setLoadingState('exiting'), 1900);
+    const exitTimer = setTimeout(() => setLoadingState('exiting'), 1700);
     const completeTimer = setTimeout(() => {
       setLoadingState('complete');
       setPreloaderSeen(true);
-    }, 2400);
+    }, 2200);
 
     return () => {
       clearTimeout(exitTimer);
