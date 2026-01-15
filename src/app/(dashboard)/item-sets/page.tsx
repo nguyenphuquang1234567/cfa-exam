@@ -66,17 +66,23 @@ function ItemSetsContent() {
           }
         });
         const data = await response.json();
-        setBooks(data);
 
-        if (bookId) {
-          const book = data.find((b: Book) => b.id === bookId);
-          if (book) {
-            setSelectedBook(book);
-            if (readingId) {
-              const reading = book.readings.find((r: Reading) => r.id === readingId);
-              if (reading) setSelectedReading(reading);
+        if (response.ok && Array.isArray(data)) {
+          setBooks(data);
+
+          if (bookId) {
+            const book = data.find((b: Book) => b.id === bookId);
+            if (book) {
+              setSelectedBook(book);
+              if (readingId) {
+                const reading = book.readings.find((r: Reading) => r.id === readingId);
+                if (reading) setSelectedReading(reading);
+              }
             }
           }
+        } else {
+          console.error('Failed to fetch books or data is not an array:', data);
+          setBooks([]);
         }
       } catch (error) {
         console.error('Failed to fetch books:', error);
