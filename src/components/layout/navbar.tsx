@@ -18,6 +18,7 @@ import {
   Home,
   Key,
   Coins,
+  Bot,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -37,6 +38,7 @@ import { Settings, CreditCard } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useUserStore } from '@/store/user-store';
 import { ProfileModal } from '@/components/profile-modal';
+import { GlobalChatbot } from '@/components/chat/global-chatbot';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -52,6 +54,7 @@ export function Navbar() {
   const dbUser = useUserStore((state) => state.user);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -115,10 +118,6 @@ export function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-3">
-            <Badge variant="level1" className="hidden sm:flex">
-              Level I
-            </Badge>
-
             {dbUser?.subscription === 'PRO' ? (
               <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 cursor-default">
                 <Crown className="h-4 w-4 fill-cyan-400" />
@@ -143,6 +142,15 @@ export function Navbar() {
             </motion.div>
 
             <ThemeToggle />
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition-all shadow-lg shadow-indigo-500/5 group"
+              onClick={() => setIsChatOpen(true)}
+            >
+              <Bot className="h-5 w-5 group-hover:scale-110 transition-transform" />
+            </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -221,6 +229,11 @@ export function Navbar() {
       <ProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
+      />
+
+      <GlobalChatbot
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
       />
 
       {/* Mobile Navigation */}

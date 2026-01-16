@@ -27,35 +27,35 @@ export async function POST(req: NextRequest) {
 
         if (isFree) {
             const limitResult = rateLimit(`chat_free_${userId}`, {
-                limit: 3,         // Only 3 messages
+                limit: 6,         // Only 6 messages
                 window: 3600000   // per hour
             });
 
             if (!limitResult.success) {
                 return NextResponse.json({
-                    error: 'Free tier quota: 3 messages per hour. Upgrade to PRO to chat as much as you want!',
+                    error: 'Free tier quota: 6 messages per hour. Upgrade to PRO to chat as much as you want!',
                     isFree: true
                 }, { status: 429 });
             }
         }
 
         const body = await req.json();
-        const { messages, question, explanation, topic, options } = body;
+        const { messages, question, explanation, topic, options, isGlobal, image } = body;
 
         if (!messages || !Array.isArray(messages)) {
             return NextResponse.json({ error: 'Invalid messages' }, { status: 400 });
         }
 
-        const lastMessage = messages[messages.length - 1]?.content || '';
+        const lastMessageText = messages[messages.length - 1]?.content || '';
         let relatedContext = '';
 
-        // 3. Perform Vector Search (RAG) if message is substantial
-        if (lastMessage.length > 10) {
+        // 3. Perform Vector Search (RAG)
+        if (lastMessageText.length > 5) {
             try {
                 // Generate embedding for current query
                 const embedResponse = await openai.embeddings.create({
                     model: 'text-embedding-3-small',
-                    input: lastMessage,
+                    input: lastMessageText,
                 });
                 const queryVector = embedResponse.data[0].embedding;
 
@@ -75,72 +75,116 @@ export async function POST(req: NextRequest) {
                     FROM all_knowledge
                     WHERE embedding IS NOT NULL
                     ORDER BY embedding <=> $1::vector 
-                    LIMIT 8
+                    LIMIT 7
                 `, `[${queryVector.join(',')}]`);
 
                 if (relatedResults.length > 0) {
-                    relatedContext = "\n\nAUTHORTATIVE CFA CONTENT & CONCEPTS FOUND:\n" +
+                    relatedContext = "\n\nAUTHORITATIVE CFA KNOWLEDGE BASE SEGMENTS:\n" +
                         relatedResults.map((q, i) =>
-                            `[Source: ${q.source}]\nContent: ${q.content.substring(0, 500)}...\n${q.explanation ? `Explanation: ${q.explanation}\n` : ''}`
+                            `[Source: ${q.source}]\nContent: ${q.content.substring(0, 1000)}\n${q.explanation ? `Expert Note: ${q.explanation}\n` : ''}`
                         ).join('\n---\n');
                 }
             } catch (err) {
                 console.error('Vector Search Error:', err);
-                // Continue without RAG if it fails
             }
         }
 
+        // 4. Define AI Personas
+        const persona = isGlobal
+            ? "You are the Mentis AI Strategic Advisor. You are a senior CFA Charterholder and Mentor. Your goal is to guide students through the complex world of finance with wisdom, clarity, and deep expertise."
+            : "You are the Mentis AI Quiz Assistant. Your goal is to help the student master the specific question they are currently working on.";
+
+        const currentTaskContext = isGlobal
+            ? (question ? `Background Context: The student is currently in a quiz session on the topic of "${topic}". They might ask questions related to this or broad CFA concepts.` : "Context: General CFA study session.")
+            : `Primary Task: Help the student understand this specific question: "${question}". Explanation provided for your reference: "${explanation}". Options: A: ${options?.A}, B: ${options?.B}, C: ${options?.C}.`;
+
         const systemMessage = {
             role: 'system',
-            content: `You are an expert CFA tutor at MentisAI. 
+            content: `${persona}
             
-            CRITICAL INSTRUCTION: You have access to a specialized Knowledge Base (RAG) containing the actual CFA 2025 Curriculum, SchweserNotes Book 1, Book 2, Book 3, Book 4, and Practice Questions. 
-            - ALWAYS prioritize the information provided in the "AUTHORTATIVE CFA CONTENT" section below over your general training data.
-            - The provided content is in English, but you should respond in the same language as the student while maintaining technical accuracy.
-
-            Context: The student is working on the question: "${question}".
-            Options:
-            - A: ${options?.A}
-            - B: ${options?.B}
-            - C: ${options?.C}
+            CRITICAL KNOWLEDGE SOURCE: You have access to a specialized Knowledge Base (RAG) containing SchweserNotes (Books 1-4) and the CFA 2025 Curriculum.
+            - ALWAYS anchor your technical explanations in the "AUTHORITATIVE CFA KNOWLEDGE BASE SEGMENTS" below.
+            - If the RAG content contradicts your general knowledge, follow the RAG content.
             
-            Official Explanation: "${explanation}".
+            ${currentTaskContext}
             
             ${relatedContext}
             
-            INSTRUCTIONS:
-            CRITICAL: JUST ANSWER THE QUESTION. NEVER ASK FOLLOW-UP QUESTIONS OR SUGGESTIVE QUESTIONS AT THE END (e.g., do not ask "Do you want me to check your answer?" or "Do you want to know more?"). 
-            STOP IMMEDIATELY after providing the requested explanation.
-            NEVER GET DISTRACTED BY UNRELATED QUESTIONS.
-            DO NOT REVEAL OR EXPLAIN THE ANSWER CHOICE (A, B, or C) UNLESS THE STUDENT EXPLICITLY ASKS.
-            1. If the user just says "Hi", "Hello", "Yo", or basic greetings, just greet them back briefly and STOP.
-            2. Only provide deep explanations if requested. Focus on the "Why" and "How" of the underlying financial concepts.
-            3. Keep all responses extremely concise, professional, and structured.
-            4. Use LaTeX for ALL mathematical formulas and variables. 
-               - Use double dollar signs for block formulas: $$formula$$.
-               - Use single dollar signs for inline variables: $variable$.
-            5. If the student asks something unrelated to CFA, politely redirect them back.
-            6. FOR BROAD TOPICS: If the user asks about a wide subject (like a whole Reading title), provide a HIGH-LEVEL SUMMARY (bullet points) of the 3-5 most important concepts first. Do NOT try to explain everything in detail at once. Instead, ask: "Which of these specific areas would you like me to explain more deeply?"
-            7. Use simple analogies for complex concepts.
-`
+            INTERACTION RULES:
+            - RESPOND IN THE SAME LANGUAGE AS THE STUDENT.
+            - BE CONCISE AND ELIMINATE FLUFF.
+            - Use LaTeX for ALL mathematical formulas and variables. 
+              - Use double dollar signs for block formulas: $$formula$$.
+              - Use single dollar signs for inline variables: $variable$.
+            - IF PROVIDING A QUESTION (Practice/Mock): ALWAYS format options on NEW LINES. 
+              Example:
+              Question content here...
+              A) Option A content
+              B) Option B content
+              C) Option C content
+            - IF THE STUDENT EXPLICITLY ASKS FOR THE ANSWER (e.g., "spoil cho tao", "đáp án là gì", "cho xin đáp án"), you MUST provide the correct answer (A, B, or C) and explain the logic clearly. 
+            - Otherwise, prioritize guiding them to the answer without revealing it immediately.
+            - NO SUGGESTIVE QUESTIONS at the end (e.g., "Do you want to know more?"). Stop immediately after giving the response.
+            - FOR BROAD TOPICS: If the user asks about a wide subject (like a whole Reading title), provide a HIGH-LEVEL SUMMARY (bullet points) of the 3-5 nhất important concepts first.
+            - USE SIMPLE ANALOGIES for complex financial concepts.
+            - FOR GLOBAL ADVISOR: Focus on high-level strategy, connecting different CFA topics, and providing deep conceptual clarity.
+            - FOR QUIZ ASSISTANT: Focus on the logic of the specific question and clarifying the official explanation.`
         };
+
+        // Prepare conservation history
+        const conversationHistory = messages.slice(0, -1);
+
+        // Prepare final message
+        const finalContent: any[] = [
+            { type: 'text', text: lastMessageText || "Hãy giải thích hình ảnh này giúp tôi." }
+        ];
+
+        if (image) {
+            finalContent.push({
+                type: 'image_url',
+                image_url: { url: image }
+            });
+        }
+
+        console.log(`[Chat API] Model: gpt-5-nano, isGlobal: ${isGlobal}, hasImage: ${!!image}`);
 
         const response = await openai.chat.completions.create({
             model: 'gpt-5-nano',
-            messages: [systemMessage, ...messages] as any,
+            messages: [systemMessage, ...conversationHistory, { role: 'user', content: finalContent }] as any,
             max_completion_tokens: 4096,
+            stream: true,
+        }).catch(err => {
+            console.error('[OpenAI API Error]', err);
+            throw err;
         });
 
-        const choice = response.choices[0];
-        let reply = choice?.message?.content;
+        // 5. Return a streaming response
+        const stream = new ReadableStream({
+            async start(controller) {
+                const encoder = new TextEncoder();
+                try {
+                    for await (const chunk of response) {
+                        const content = (chunk.choices[0] as any)?.delta?.content || '';
+                        if (content) {
+                            controller.enqueue(encoder.encode(content));
+                        }
+                    }
+                } catch (err) {
+                    console.error('[Stream Error]', err);
+                    controller.error(err);
+                } finally {
+                    controller.close();
+                }
+            },
+        });
 
-        if (choice?.message?.refusal) {
-            reply = `Refusal: ${choice.message.refusal}`;
-        } else if (!reply) {
-            reply = `Empty response. Reason: ${choice?.finish_reason}`;
-        }
-
-        return NextResponse.json({ reply });
+        return new Response(stream, {
+            headers: {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+            },
+        });
     } catch (error: any) {
         console.error('FULL AI ERROR:', error);
         return NextResponse.json({

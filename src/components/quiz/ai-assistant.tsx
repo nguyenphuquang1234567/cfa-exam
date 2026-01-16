@@ -89,25 +89,69 @@ export function QuizAIAssistant({ question, explanation, options, topic, current
                 }),
             });
 
-            const data = await response.json();
-            if (data.reply) {
-                setMessages([...newMessages, { role: 'assistant', content: data.reply }]);
-            } else {
-                const errorMsg = data.error || 'Unknown error';
-                setMessages([...newMessages, { role: 'assistant', content: `Error: ${errorMsg}` }]);
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to get response');
             }
-        } catch (error) {
+
+            // Handle Streaming Response
+            const reader = response.body?.getReader();
+            if (!reader) throw new Error('No reader available');
+
+            // Add an empty assistant message to start streaming into
+            setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+
+            let assistantReply = '';
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = new TextDecoder().decode(value);
+                assistantReply += chunk;
+
+                // Update the last message in the list
+                setMessages(prev => {
+                    const next = [...prev];
+                    next[next.length - 1] = { role: 'assistant', content: assistantReply };
+                    return next;
+                });
+            }
+        } catch (error: any) {
             console.error('Chat error:', error);
-            setMessages([...newMessages, { role: 'assistant', content: 'Connection error. Please try again.' }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message || 'Connection error'}` }]);
         } finally {
             setIsLoading(false);
         }
     };
 
+    const cardRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const card = cardRef.current;
+        if (!card) return;
+
+        const handleWheel = (e: WheelEvent) => {
+            if (scrollRef.current) {
+                // Manually scroll the chat content
+                scrollRef.current.scrollTop += e.deltaY;
+
+                // CRITICAL: Stop the event from reaching the window/body
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+
+        card.addEventListener('wheel', handleWheel, { passive: false });
+        return () => card.removeEventListener('wheel', handleWheel);
+    }, []);
+
     return (
-        <Card className="flex flex-col h-[600px] border-border/50 bg-card/50 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl relative">
+        <Card
+            ref={cardRef}
+            className="flex flex-col h-[600px] border-border/50 bg-card/50 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl relative select-none"
+        >
             {/* Header */}
-            <div className="p-4 border-b border-border/50 bg-indigo-500/5 flex items-center gap-3">
+            <div className="p-4 border-b border-border/50 bg-indigo-500/5 flex items-center gap-3 select-auto">
                 <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center">
                     <Bot className="w-5 h-5 text-white" />
                 </div>
@@ -124,7 +168,7 @@ export function QuizAIAssistant({ question, explanation, options, topic, current
             {/* Chat Content */}
             <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
+                className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain select-auto"
             >
                 {messages.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-4">

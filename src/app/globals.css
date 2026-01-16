@@ -148,11 +148,23 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/20 rounded-full;
+    @apply bg-muted-foreground/20 rounded-full border-2 border-transparent bg-clip-content;
   }
 
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-muted-foreground/40;
+  }
+
+  .custom-scrollbar-thick::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .custom-scrollbar-thick::-webkit-scrollbar-thumb {
+    @apply bg-indigo-500/20 border-border;
+  }
+
+  .custom-scrollbar-thick::-webkit-scrollbar-thumb:hover {
+    @apply bg-indigo-500/40;
   }
 }
 
