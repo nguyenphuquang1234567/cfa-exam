@@ -72,6 +72,7 @@ model Question {
   losId         String?
   cfaLevel      CFALevel
   createdAt     DateTime           @default(now())
+  embedding     Unsupported("vector(1536)")?
   los           LearningObjective? @relation(fields: [losId], references: [id])
   topic         Topic              @relation(fields: [topicId], references: [id])
   quizQuestions QuizQuestion[]
@@ -279,6 +280,7 @@ model ModuleQuizQuestion {
   optionC     String
   correct     AnswerChoice     @default(B)
   explanation String?
+  embedding   Unsupported("vector(1536)")?
   header      ModuleQuizHeader @relation(fields: [headerId], references: [id], onDelete: Cascade)
 
   @@unique([headerId, questionNo])
@@ -336,4 +338,15 @@ enum AnswerChoice {
   A
   B
   C
+}
+
+model DocumentChunk {
+  id         String   @id @default(cuid())
+  fileName   String
+  content    String
+  pageNumber Int?
+  embedding  Unsupported("vector(1536)")?
+  createdAt  DateTime @default(now())
+
+  @@index([fileName])
 }
