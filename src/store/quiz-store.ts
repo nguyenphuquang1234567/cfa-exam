@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface QuizQuestion {
   id: string;
@@ -15,6 +16,17 @@ export interface QuizQuestion {
     name: string;
   };
   isModuleQuiz?: boolean;
+}
+
+interface StashedExam {
+  quizId: string;
+  questions: QuizQuestion[];
+  currentIndex: number;
+  answers: Record<string, string>;
+  flaggedQuestions: string[];
+  timeRemaining: number;
+  startTime: number | null;
+  studyPlanItemId: string | null;
 }
 
 interface QuizState {
@@ -41,16 +53,9 @@ interface QuizState {
   timeSpent: number; // in seconds
   flaggedQuestions: string[];
   isSynced: boolean;
-  savedExamSession: {
-    quizId: string | null;
-    questions: QuizQuestion[];
-    currentIndex: number;
-    answers: Record<string, string>;
-    flaggedQuestions: string[];
-    timeRemaining: number;
-    startTime: number | null;
-    studyPlanItemId: string | null;
-  } | null;
+
+  // Multiple stashed exams
+  stashedExams: Record<string, StashedExam>;
 
   // Actions
   startQuiz: (quizId: string | null, questions: QuizQuestion[], mode: 'PRACTICE' | 'TIMED' | 'EXAM', timeLimit?: number, studyPlanItemId?: string | null) => void;
@@ -66,11 +71,9 @@ interface QuizState {
   tick: () => void;
   pauseTimer: () => void;
   resumeTimer: () => void;
-  resumeExamSession: () => void;
-  clearSavedExam: () => void;
+  resumeExamSession: (quizId: string) => void;
+  clearSavedExam: (quizId: string) => void;
 }
-
-import { persist, createJSONStorage } from 'zustand/middleware';
 
 export const useQuizStore = create<QuizState>()(
   persist(
@@ -90,36 +93,40 @@ export const useQuizStore = create<QuizState>()(
       startTime: null,
       timeSpent: 0,
       isSynced: false,
-      savedExamSession: null,
+      stashedExams: {},
       flaggedQuestions: [],
 
-      startQuiz: (quizId, questions, mode, timeLimit, studyPlanItemId) => { // Correctly wrapped startQuiz logic
+      startQuiz: (quizId, questions, mode, timeLimit, studyPlanItemId) => {
         const upperMode = mode.toUpperCase() as 'PRACTICE' | 'TIMED' | 'EXAM';
         const time = timeLimit ? timeLimit * 60 : questions.length * 90;
-
         const state = get();
-        // If we are currently in an EXAM and starting something else, SAVE the exam progress
-        if (state.isActive && state.mode === 'EXAM' && upperMode !== 'EXAM') {
-          set({
-            savedExamSession: {
-              quizId: state.quizId,
-              questions: state.questions,
-              currentIndex: state.currentIndex,
-              answers: state.answers,
-              flaggedQuestions: state.flaggedQuestions,
-              timeRemaining: state.timeRemaining,
-              startTime: state.startTime,
-              studyPlanItemId: state.studyPlanItemId,
+
+        // 1. Stash current active EXAM if we are starting a different one
+        if (state.isActive && state.mode === 'EXAM' && state.quizId && state.quizId !== quizId) {
+          set((prev) => ({
+            stashedExams: {
+              ...prev.stashedExams,
+              [state.quizId!]: {
+                quizId: state.quizId!,
+                questions: state.questions,
+                currentIndex: state.currentIndex,
+                answers: state.answers,
+                flaggedQuestions: state.flaggedQuestions,
+                timeRemaining: state.timeRemaining,
+                startTime: state.startTime,
+                studyPlanItemId: state.studyPlanItemId,
+              }
             }
-          });
+          }));
         }
 
-        // If we are already active on THIS specific quiz, don't reset answers
+        // 2. If already active on THIS quiz, just update questions and bail
         if (state.isActive && state.quizId === quizId) {
           set({ questions });
           return;
         }
 
+        // 3. Start fresh or from stash
         set({
           quizId,
           isActive: true,
@@ -179,20 +186,21 @@ export const useQuizStore = create<QuizState>()(
       },
 
       submitQuiz: () => {
-        const { startTime, mode } = get();
+        const { startTime, mode, quizId } = get();
         const timeSpent = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
 
-        set({
-          isCompleted: true,
-          isActive: false,
-          isTimerRunning: false,
-          timeSpent,
-        });
+        set((prev) => {
+          const newStashed = { ...prev.stashedExams };
+          if (quizId) delete newStashed[quizId];
 
-        // If we completed an exam, we should clear any saved exam session
-        if (mode === 'EXAM') {
-          set({ savedExamSession: null });
-        }
+          return {
+            isCompleted: true,
+            isActive: false,
+            isTimerRunning: false,
+            timeSpent,
+            stashedExams: newStashed,
+          };
+        });
       },
 
       setSynced: (synced: boolean) => {
@@ -239,29 +247,55 @@ export const useQuizStore = create<QuizState>()(
         set({ isTimerRunning: true });
       },
 
-      resumeExamSession: () => {
-        const { savedExamSession } = get();
-        if (!savedExamSession) {
-          // If no background saved session, but current active IS an exam, we just stay
-          const state = get();
-          if (state.isActive && state.mode === 'EXAM') return;
-          return;
-        }
+      resumeExamSession: (targetQuizId: string) => {
+        const state = get();
 
-        set({
-          ...savedExamSession,
-          isActive: true,
-          mode: 'EXAM',
-          isCompleted: false,
-          isTimerRunning: true,
-          isSynced: false,
-          showExplanation: false,
-          savedExamSession: null, // Move from background to active
+        // 1. Check if it's already active
+        if (state.isActive && state.quizId === targetQuizId) return;
+
+        // 2. Get stashed data
+        const stashed = state.stashedExams[targetQuizId];
+        if (!stashed) return;
+
+        set((prev) => {
+          const newStashed = { ...prev.stashedExams };
+
+          // 3. BEFORE loading the stashed one, if there's an active one, stash IT
+          if (prev.isActive && prev.mode === 'EXAM' && prev.quizId && prev.quizId !== targetQuizId) {
+            newStashed[prev.quizId] = {
+              quizId: prev.quizId,
+              questions: prev.questions,
+              currentIndex: prev.currentIndex,
+              answers: prev.answers,
+              flaggedQuestions: prev.flaggedQuestions,
+              timeRemaining: prev.timeRemaining,
+              startTime: prev.startTime,
+              studyPlanItemId: prev.studyPlanItemId,
+            };
+          }
+
+          // 4. Remove the target from stash and set as active
+          delete newStashed[targetQuizId];
+
+          return {
+            ...stashed,
+            stashedExams: newStashed,
+            isActive: true,
+            mode: 'EXAM',
+            isCompleted: false,
+            isTimerRunning: true,
+            isSynced: false,
+            showExplanation: false,
+          };
         });
       },
 
-      clearSavedExam: () => {
-        set({ savedExamSession: null });
+      clearSavedExam: (targetQuizId: string) => {
+        set((prev) => {
+          const newStashed = { ...prev.stashedExams };
+          delete newStashed[targetQuizId];
+          return { stashedExams: newStashed };
+        });
       }
     }),
     {
@@ -281,7 +315,7 @@ export const useQuizStore = create<QuizState>()(
         startTime: state.startTime,
         timeSpent: state.timeSpent,
         studyPlanItemId: state.studyPlanItemId,
-        savedExamSession: state.savedExamSession,
+        stashedExams: state.stashedExams,
       }),
     }
   )

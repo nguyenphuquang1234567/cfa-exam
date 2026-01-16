@@ -56,14 +56,17 @@ function QuizContent() {
     : (queryTopics.charAt(0).toUpperCase() + queryTopics.slice(1).replace('_', ' '));
 
   useEffect(() => {
-    // RESUME LOGIC: STRICTLY ONLY for EXAM mode
-    const { isActive, questions: storedQuestions, mode: storedMode } = useQuizStore.getState();
+    // RESUME LOGIC: STRICTLY ONLY for the SAME EXAM session
+    const { isActive, questions: storedQuestions, mode: storedMode, quizId: storedQuizId } = useQuizStore.getState();
+    const examIndex = searchParams.get('examIndex') || '1';
+    const studyPlanItemId = searchParams.get('studyPlanItemId');
+    const v = searchParams.get('v');
+    const targetQuizId = `session-${queryTopics}-${queryMode}-${count}-${difficulty}${examIndex !== '1' ? `-exam-${examIndex}` : ''}${studyPlanItemId ? `-${studyPlanItemId}` : ''}${v ? `-${v}` : ''}`;
 
     // Only skip fetching if:
-    // 1. Current request is for EXAM mode
-    // 2. We have an active session in the store
-    // 3. That active session is ALSO EXAM mode
-    if (queryMode === 'EXAM' && isActive && storedQuestions.length > 0 && storedMode === 'EXAM') {
+    // 1. We have an active session in the store
+    // 2. It matches the quiz we are trying to load
+    if (isActive && storedQuestions.length > 0 && storedQuizId === targetQuizId) {
       setIsLoading(false);
       return;
     }
@@ -77,7 +80,9 @@ function QuizContent() {
       try {
         const token = await user.getIdToken();
         const studyPlanItemId = searchParams.get('studyPlanItemId');
-        const response = await fetch(`/api/quiz/questions?topics=${queryTopics}&count=${count}&difficulty=${difficulty}&mode=${queryMode}`, {
+        const examIndex = searchParams.get('examIndex') || '1';
+
+        const response = await fetch(`/api/quiz/questions?topics=${queryTopics}&count=${count}&difficulty=${difficulty}&mode=${queryMode}&examIndex=${examIndex}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -86,7 +91,7 @@ function QuizContent() {
 
         if (data.error) throw new Error(data.error);
 
-        const quizId = `session-${queryTopics}-${queryMode}-${count}-${difficulty}${studyPlanItemId ? `-${studyPlanItemId}` : ''}`;
+        const quizId = `session-${queryTopics}-${queryMode}-${count}-${difficulty}${examIndex !== '1' ? `-exam-${examIndex}` : ''}${studyPlanItemId ? `-${studyPlanItemId}` : ''}`;
         startQuiz(quizId, data, queryMode, undefined, studyPlanItemId);
       } catch (error) {
         console.error('Failed to load questions:', error);

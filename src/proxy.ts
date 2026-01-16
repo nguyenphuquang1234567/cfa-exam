@@ -26,8 +26,8 @@ export function proxy(request: NextRequest) {
         // 2. Strict limit for Quiz Questions (Protecting database/content)
         if (path.includes('/api/quiz/questions')) {
             const result = rateLimit(`q_limit_${ip}`, {
-                limit: 5,
-                window: 60 * 1000 // 5 times per minute
+                limit: 30,
+                window: 60 * 1000 // 30 times per minute
             });
             if (!result.success) {
                 return NextResponse.json(
