@@ -5,7 +5,7 @@ import { verifyAuth, authErrorResponse } from '@/lib/server-auth-utils';
 export async function GET(req: NextRequest) {
     try {
         const authResult = await verifyAuth(req);
-        if (authResult.error) return authErrorResponse(authResult as any);
+        if (authResult.error || !authResult.uid) return authErrorResponse(authResult as any);
         const userId = authResult.uid;
 
         const sessions = await prisma.chatSession.findMany({
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const authResult = await verifyAuth(req);
-        if (authResult.error) return authErrorResponse(authResult as any);
+        if (authResult.error || !authResult.uid) return authErrorResponse(authResult as any);
         const userId = authResult.uid;
 
         const session = await prisma.chatSession.create({

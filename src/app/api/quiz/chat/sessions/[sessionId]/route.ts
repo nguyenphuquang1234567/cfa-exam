@@ -9,7 +9,7 @@ export async function GET(
     try {
         const { sessionId } = await params;
         const authResult = await verifyAuth(req);
-        if (authResult.error) return authErrorResponse(authResult as any);
+        if (authResult.error || !authResult.uid) return authErrorResponse(authResult as any);
         const userId = authResult.uid;
 
         const session = await prisma.chatSession.findFirst({
@@ -38,7 +38,7 @@ export async function DELETE(
     try {
         const { sessionId } = await params;
         const authResult = await verifyAuth(req);
-        if (authResult.error) return authErrorResponse(authResult as any);
+        if (authResult.error || !authResult.uid) return authErrorResponse(authResult as any);
         const userId = authResult.uid;
 
         await prisma.chatSession.deleteMany({
@@ -58,7 +58,7 @@ export async function PATCH(
     try {
         const { sessionId } = await params;
         const authResult = await verifyAuth(req);
-        if (authResult.error) return authErrorResponse(authResult as any);
+        if (authResult.error || !authResult.uid) return authErrorResponse(authResult as any);
         const userId = authResult.uid;
 
         const body = await req.json();
