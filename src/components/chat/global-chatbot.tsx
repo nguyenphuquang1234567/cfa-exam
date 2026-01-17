@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Loader2, Sparkles, MessageCircle, X, Trash2, RotateCcw, ImageIcon, Paperclip, UploadCloud } from 'lucide-react';
+import { Send, Bot, User, Loader2, Sparkles, MessageCircle, X, Trash2, RotateCcw, ImageIcon, Paperclip, UploadCloud, ChevronDown, History, Settings, Search, Edit2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/context/auth-context';
 import { useQuizStore } from '@/store/quiz-store';
+import { useUserStore } from '@/store/user-store';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -16,12 +17,20 @@ import 'katex/dist/katex.min.css';
 interface Message {
     role: 'user' | 'assistant';
     content: string;
+    image?: string;
 }
 
 interface GlobalChatbotProps {
     isOpen: boolean;
     onClose: () => void;
 }
+
+const getInitials = (name?: string | null) => {
+    if (!name) return '??';
+    const parts = name.split(' ');
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+};
 
 const formatMath = (content: string) => {
     return content
@@ -33,7 +42,8 @@ const formatMath = (content: string) => {
 };
 
 export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
-    const { user } = useAuth();
+    const { user: firebaseUser } = useAuth();
+    const { user: dbUser } = useUserStore();
     const { questions, currentIndex, isActive } = useQuizStore();
     const currentQuestion = isActive ? questions[currentIndex] : null;
 
@@ -42,8 +52,114 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+    const [sessions, setSessions] = useState<any[]>([]);
+    const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+    const [editingTitle, setEditingTitle] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const isProcessingRename = useRef(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (isOpen && firebaseUser) {
+            fetchSessions();
+        }
+    }, [isOpen, firebaseUser]);
+
+    const fetchSessions = async () => {
+        try {
+            const token = await firebaseUser?.getIdToken();
+            const res = await fetch('/api/quiz/chat/sessions', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (Array.isArray(data)) setSessions(data);
+        } catch (err) {
+            console.error('Failed to fetch sessions', err);
+        }
+    };
+
+    const loadSession = async (sessionId: string) => {
+        if (isLoading) return;
+        setIsLoading(true);
+        try {
+            const token = await firebaseUser?.getIdToken();
+            const res = await fetch(`/api/quiz/chat/sessions/${sessionId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.messages) {
+                setMessages(data.messages);
+                setCurrentSessionId(sessionId);
+            }
+        } catch (err) {
+            console.error('Failed to load session', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const createNewChat = async () => {
+        if (isLoading) return;
+        setMessages([]);
+        setCurrentSessionId(null);
+        setSelectedImage(null);
+        setInput('');
+    };
+
+    const deleteSession = async (sessionId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            const token = await firebaseUser?.getIdToken();
+            await fetch(`/api/quiz/chat/sessions/${sessionId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setSessions(prev => prev.filter(s => s.id !== sessionId));
+            if (currentSessionId === sessionId) createNewChat();
+        } catch (err) {
+            console.error('Failed to delete session', err);
+        }
+    };
+
+    const renameSession = async (sessionId: string, newTitle: string) => {
+        const trimmedTitle = newTitle.trim();
+        if (!trimmedTitle || isProcessingRename.current) {
+            setEditingSessionId(null);
+            return;
+        }
+
+        // Optimistic update
+        setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, title: trimmedTitle } : s));
+        setEditingSessionId(null);
+
+        isProcessingRename.current = true;
+        try {
+            const token = await firebaseUser?.getIdToken();
+            const res = await fetch(`/api/quiz/chat/sessions/${sessionId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title: trimmedTitle })
+            });
+
+            if (!res.ok) {
+                // Revert on error
+                fetchSessions();
+                console.error('Failed to rename session in DB');
+            }
+        } catch (err) {
+            console.error('Rename error:', err);
+            fetchSessions();
+        } finally {
+            isProcessingRename.current = false;
+        }
+    };
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -60,6 +176,10 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
         };
         reader.readAsDataURL(file);
     };
+
+    const filteredSessions = sessions.filter(s =>
+        (s.title || 'New Chat').toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -98,27 +218,49 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
     };
 
     const handleSend = async () => {
-        if ((!input.trim() && !selectedImage) || isLoading || !user) return;
+        if ((!input.trim() && !selectedImage) || isLoading || !firebaseUser) return;
 
         const userMessage = input.trim();
         const currentImage = selectedImage;
-        setInput('');
+
+        // Use a small timeout to ensure the clear happens after any pending IME/input events
+        setTimeout(() => setInput(''), 10);
         setSelectedImage(null);
 
-        const newMessages: Message[] = [...messages, { role: 'user', content: userMessage }];
-        setMessages(newMessages);
+        const userMsg: Message = {
+            role: 'user',
+            content: userMessage,
+            image: currentImage || undefined
+        };
+
+        setMessages(prev => [...prev, userMsg]);
         setIsLoading(true);
 
         try {
-            const token = await user.getIdToken();
-            const response = await fetch('/api/quiz/chat', {
+            const token = await firebaseUser.getIdToken();
+            let sessionId = currentSessionId;
+
+            if (!sessionId) {
+                const sessionRes = await fetch('/api/quiz/chat/sessions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const sessionData = await sessionRes.json();
+                sessionId = sessionData.id;
+                setCurrentSessionId(sessionId);
+            }
+
+            const chatResponse = await fetch('/api/quiz/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    messages: newMessages,
+                    messages: [...messages, userMsg],
                     question: currentQuestion?.content,
                     explanation: currentQuestion?.explanation,
                     options: currentQuestion ? {
@@ -126,45 +268,43 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
                         B: currentQuestion.optionB,
                         C: currentQuestion.optionC
                     } : undefined,
-                    topic: currentQuestion?.topic?.id || 'General CFA Support',
+                    topic: currentQuestion?.topic?.name || 'General CFA Support',
                     isGlobal: true,
-                    image: currentImage // Base64 string
+                    image: currentImage,
+                    sessionId
                 }),
             });
 
-            if (!response.ok) {
-                const data = await response.json();
+            if (!chatResponse.ok) {
+                const data = await chatResponse.json();
                 throw new Error(data.error || 'Failed to get response');
             }
 
-            // Handle Streaming Response
-            const reader = response.body?.getReader();
+            setTimeout(fetchSessions, 5000);
+            const reader = chatResponse.body?.getReader();
             if (!reader) throw new Error('No reader available');
 
             const decoder = new TextDecoder();
-            // Add an empty assistant message to start streaming into
             setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
-            let assistantReply = '';
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-
                 const chunk = decoder.decode(value);
-                assistantReply += chunk;
-
-                // Update the last message in the list
                 setMessages(prev => {
-                    const next = [...prev];
-                    next[next.length - 1] = { role: 'assistant', content: assistantReply };
-                    return next;
+                    if (prev.length === 0) return prev;
+                    const last = prev[prev.length - 1];
+                    if (last.role !== 'assistant') return prev;
+                    const others = prev.slice(0, -1);
+                    return [...others, { ...last, content: last.content + chunk }];
                 });
             }
-        } catch (error: any) {
-            console.error('Chat error:', error);
-            setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message || 'Connection error'}` }]);
+        } catch (err: any) {
+            console.error('Chat error:', err);
+            setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${err.message || 'Something went wrong'}` }]);
         } finally {
             setIsLoading(false);
+            fetchSessions();
         }
     };
 
@@ -204,7 +344,7 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className="max-w-[98vw] w-[1600px] h-[90vh] p-0 overflow-hidden border-border/50 bg-background/60 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl flex flex-col gap-0 outline-none select-none [&>button]:hidden z-[60]"
+                className="max-w-[98vw] w-[1600px] h-[90vh] p-0 overflow-hidden border-0 bg-[#171717] rounded-[2.5rem] shadow-2xl flex flex-col gap-0 outline-none select-none [&>button]:hidden z-[60]"
             >
                 {/* Drag Overlay */}
                 <AnimatePresence>
@@ -223,201 +363,398 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
                         </motion.div>
                     )}
                 </AnimatePresence>
-                {/* Header */}
-                <div className="px-8 py-6 border-b border-border/50 bg-indigo-500/5 flex items-center justify-between shrink-0 select-auto">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                            <Bot className="w-7 h-7 text-white" />
-                        </div>
-                        <div>
-                            <DialogTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-                                Mentis Global AI Advisor
-                            </DialogTitle>
-                            <div className="flex items-center gap-2 mt-0.5">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                                    {isActive ? `Question #${currentIndex + 1} Context Active` : 'CFA Knowledge Base Active'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setMessages([])}
-                            className="w-10 h-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-colors text-muted-foreground/30"
-                            title="Clear Chat"
-                        >
-                            <Trash2 className="w-5 h-5" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={onClose}
-                            className="w-10 h-10 rounded-xl hover:bg-muted transition-colors"
-                        >
-                            <X className="w-6 h-6" />
-                        </Button>
-                    </div>
-                </div>
 
-                {/* Chat Content */}
-                <div
-                    ref={scrollRef}
-                    className="flex-1 overflow-y-auto p-8 space-y-6 flex flex-col custom-scrollbar-thick select-auto overscroll-contain"
-                >
-                    {messages.length === 0 && (
-                        <div className="flex flex-col items-center justify-center flex-1 text-center max-w-2xl mx-auto space-y-8 py-12">
+                <div className="flex-1 flex overflow-hidden">
+                    {/* Left Sidebar (History/New Chat) */}
+                    <AnimatePresence>
+                        {isSidebarOpen && (
                             <motion.div
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                className="w-24 h-24 rounded-[2.5rem] bg-indigo-500/10 flex items-center justify-center text-indigo-500 shrink-0"
+                                initial={{ width: 0, opacity: 0 }}
+                                animate={{ width: 280, opacity: 1 }}
+                                exit={{ width: 0, opacity: 0 }}
+                                className="bg-[#171717] flex flex-col overflow-hidden border-r border-white/5 shrink-0"
                             >
-                                <Sparkles className="w-12 h-12" />
-                            </motion.div>
-                            <div className="space-y-4">
-                                <h2 className="text-4xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/60">
-                                    How can I help you?
-                                </h2>
-                                <p className="text-lg text-muted-foreground font-medium">
-                                    I have access to your current quiz, all SchweserNotes, and curriculum materials.
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
-                    <AnimatePresence initial={false}>
-                        {messages.map((m, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                            >
-                                <div className={`flex items-end gap-3 max-w-[85%] ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${m.role === 'user' ? 'bg-indigo-600' : 'bg-muted border border-border/50'
-                                        }`}>
-                                        {m.role === 'user' ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-indigo-500" />}
-                                    </div>
-                                    <div className={`p-6 rounded-[2.5rem] text-base leading-relaxed ${m.role === 'user'
-                                        ? 'bg-indigo-600 text-white rounded-br-none shadow-xl shadow-indigo-500/20'
-                                        : 'bg-muted/30 text-foreground rounded-bl-none border border-border/50 backdrop-blur-md'
-                                        }`}>
-                                        {m.role === 'assistant' ? (
-                                            <div className="prose prose-invert prose-indigo max-w-none break-words">
-                                                <ReactMarkdown
-                                                    remarkPlugins={[remarkMath]}
-                                                    rehypePlugins={[rehypeKatex]}
-                                                    components={{
-                                                        p: ({ children }) => <p className="mb-4 last:mb-0 leading-relaxed">{children}</p>,
-                                                        ul: ({ children }) => <ul className="list-disc ml-6 mb-4 space-y-2">{children}</ul>,
-                                                        ol: ({ children }) => <ol className="list-decimal ml-6 mb-4 space-y-2">{children}</ol>,
-                                                        li: ({ children }) => <li className="mb-1">{children}</li>,
-                                                        strong: ({ children }) => <strong className="font-bold text-indigo-400">{children}</strong>,
-                                                        code: ({ children }) => <code className="bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded font-mono text-sm">{children}</code>
-                                                    }}
-                                                >
-                                                    {formatMath(m.content)}
-                                                </ReactMarkdown>
+                                <div className="p-4 space-y-4">
+                                    <Button
+                                        onClick={createNewChat}
+                                        className="w-full justify-between items-center h-11 rounded-xl bg-transparent hover:bg-white/5 text-white/90 border border-white/10 font-medium transition-all text-sm px-4 group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
+                                                <Sparkles className="w-3.5 h-3.5" />
                                             </div>
-                                        ) : (
-                                            <p className="whitespace-pre-wrap font-medium">{m.content}</p>
+                                            <span>New Chat</span>
+                                        </div>
+                                        <div className="p-1 rounded bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Send className="w-3 h-3" />
+                                        </div>
+                                    </Button>
+
+                                    <div className="relative group">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-indigo-400 transition-colors" />
+                                        <input
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            placeholder="Search chats..."
+                                            className="w-full bg-white/5 border border-white/5 rounded-lg text-xs text-white/60 placeholder-white/20 focus:ring-1 focus:ring-white/10 pl-9 pr-8 h-9 outline-none transition-all"
+                                        />
+                                        {searchQuery && (
+                                            <button
+                                                onClick={() => setSearchQuery('')}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:text-white text-white/20 transition-colors"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
                                         )}
                                     </div>
                                 </div>
+
+                                <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-1 custom-scrollbar-thick">
+                                    <div className="px-3 pt-4 pb-2 text-[11px] font-bold text-white/30 uppercase tracking-widest">
+                                        {searchQuery ? `Search Results (${filteredSessions.length})` : 'Chat History'}
+                                    </div>
+                                    {filteredSessions.map((s) => (
+                                        <div
+                                            key={s.id}
+                                            onClick={() => editingSessionId !== s.id && loadSession(s.id)}
+                                            className={`group relative py-2.5 px-3 rounded-xl cursor-pointer transition-all flex items-center gap-3 ${currentSessionId === s.id
+                                                ? 'bg-white/[0.08] text-white'
+                                                : 'hover:bg-white/5 text-white/60 hover:text-white'
+                                                }`}
+                                        >
+                                            <MessageCircle className={`w-4 h-4 shrink-0 ${currentSessionId === s.id ? 'text-white' : 'text-white/30'}`} />
+                                            {editingSessionId === s.id ? (
+                                                <div className="flex-1 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                                    <input
+                                                        autoFocus
+                                                        value={editingTitle}
+                                                        onChange={(e) => setEditingTitle(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault();
+                                                                renameSession(s.id, editingTitle);
+                                                            }
+                                                            if (e.key === 'Escape') {
+                                                                setEditingSessionId(null);
+                                                            }
+                                                        }}
+                                                        onBlur={() => {
+                                                            // Only rename if we haven't already cancelled or submitted
+                                                            if (editingSessionId === s.id) {
+                                                                renameSession(s.id, editingTitle);
+                                                            }
+                                                        }}
+                                                        className="flex-1 bg-white/10 border-none rounded px-2 py-1 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none w-full"
+                                                    />
+                                                    <button
+                                                        onMouseDown={(e) => {
+                                                            // Use onMouseDown to trigger before onBlur
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            renameSession(s.id, editingTitle);
+                                                        }}
+                                                        className="p-1 hover:bg-white/10 rounded-md transition-colors"
+                                                    >
+                                                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <span className="truncate text-xs flex-1 font-medium">{s.title || 'New Chat'}</span>
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditingSessionId(s.id);
+                                                                setEditingTitle(s.title || '');
+                                                            }}
+                                                            className="p-1 hover:text-indigo-400 transition-all"
+                                                        >
+                                                            <Edit2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => deleteSession(s.id, e)}
+                                                            className="p-1 hover:text-red-400 transition-all"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {sessions.length === 0 && !isLoading && (
+                                        <div className="text-center py-12 px-4 opacity-40">
+                                            <p className="text-[11px] italic">No conversations yet</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="p-3 border-t border-white/5">
+                                    <div className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 transition-all group cursor-pointer">
+                                        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-[11px] font-bold text-white uppercase ring-1 ring-white/10 shadow-lg shrink-0">
+                                            {getInitials(dbUser?.name || firebaseUser?.displayName)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-white truncate">{dbUser?.name || firebaseUser?.displayName || 'Guest User'}</p>
+                                            <p className="text-[10px] text-white/40 truncate font-medium uppercase tracking-wider">
+                                                {dbUser?.subscription === 'PRO' ? 'CFA Pro Member' : 'Free Account'}
+                                            </p>
+                                        </div>
+                                        <Settings className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors" />
+                                    </div>
+                                </div>
                             </motion.div>
-                        ))}
+                        )}
                     </AnimatePresence>
 
-                    {isLoading && (
+                    {/* Main Chat Area */}
+                    <div className="flex-1 flex flex-col relative overflow-hidden bg-[#212121]">
+                        {/* Compact Header */}
+                        <header className="h-14 border-b border-white/5 flex items-center justify-between px-4 bg-[#212121]/80 backdrop-blur-md z-10 shrink-0">
+                            <div className="flex items-center gap-3">
+                                {!isSidebarOpen && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setIsSidebarOpen(true)}
+                                        className="text-white/60 hover:text-white hover:bg-white/5"
+                                    >
+                                        <History className="w-5 h-5" />
+                                    </Button>
+                                )}
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 cursor-pointer transition-colors">
+                                    <DialogTitle className="font-bold text-white/90 text-sm">
+                                        CFA AI Advisor
+                                    </DialogTitle>
+                                    <ChevronDown className="w-4 h-4 text-white/40" />
+                                </div>
+
+                                {isActive && currentQuestion && (
+                                    <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 animate-in fade-in slide-in-from-left-2 transition-all">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-tight">
+                                            Linked: Q{currentIndex + 1} - {currentQuestion.topic?.name || 'Current Question'}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={onClose}
+                                    className="w-10 h-10 rounded-xl hover:bg-white/5 transition-colors text-white/40 hover:text-white"
+                                >
+                                    <X className="w-6 h-6" />
+                                </Button>
+                            </div>
+                        </header>
+
+                        <div
+                            ref={scrollRef}
+                            className="flex-1 overflow-y-auto custom-scrollbar-thick select-auto overscroll-contain"
+                        >
+                            <div className="max-w-4xl mx-auto py-8">
+                                {messages.length === 0 && (
+                                    <div className="flex flex-col items-center justify-center py-32 text-center space-y-6">
+                                        <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-white/20 border border-white/5">
+                                            <Bot className="w-8 h-8" />
+                                        </div>
+                                        <h2 className="text-3xl font-bold tracking-tight text-white/90">
+                                            How can I help you?
+                                        </h2>
+                                    </div>
+                                )}
+
+                                {messages.map((m, idx) => (
+                                    <div key={idx} className={`group w-full border-b border-white/[0.03] last:border-0 ${m.role === 'user' ? 'bg-white/[0.02]' : ''}`}>
+                                        <div className={`max-w-3xl mx-auto px-4 py-8 flex gap-4 md:gap-6 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                            <div className="shrink-0">
+                                                {m.role === 'assistant' ? (
+                                                    <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center border border-white/10 shadow-lg">
+                                                        <Bot className="w-5 h-5 text-white" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center border border-white/10 shadow-lg text-[10px] font-bold text-white uppercase text-center">
+                                                        {getInitials(dbUser?.name || firebaseUser?.displayName)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className={`flex-1 min-w-0 space-y-2 ${m.role === 'user' ? 'text-right' : ''}`}>
+                                                <div className={`font-bold text-[13px] text-white/50 flex items-center gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                                    {m.role === 'assistant' ? 'AI Advisor' : 'You'}
+                                                </div>
+                                                <div className="prose prose-invert prose-indigo max-w-none break-words text-[15px] leading-relaxed text-white/90">
+                                                    {m.image && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, scale: 0.95 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            className="mb-4 rounded-xl overflow-hidden border border-white/10 cursor-zoom-in group/img relative shadow-2xl inline-block"
+                                                            onClick={() => setLightboxImage(m.image!)}
+                                                        >
+                                                            <img
+                                                                src={m.image}
+                                                                alt="Uploaded"
+                                                                className="max-h-80 w-auto object-contain transition-transform group-hover/img:scale-[1.01]"
+                                                            />
+                                                        </motion.div>
+                                                    )}
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[remarkMath]}
+                                                        rehypePlugins={[rehypeKatex]}
+                                                    >
+                                                        {formatMath(m.content)}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {isLoading && (
+                                    <div className="group w-full">
+                                        <div className="max-w-3xl mx-auto px-4 py-8 flex gap-6">
+                                            <div className="shrink-0 animate-pulse">
+                                                <div className="w-8 h-8 rounded-lg bg-emerald-600/50 flex items-center justify-center border border-white/10">
+                                                    <Bot className="w-5 h-5 text-white/50" />
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 py-2">
+                                                <div className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                                <div className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                                <div className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="h-40" />
+                            </div>
+                        </div>
+
+                        {/* Floating Input Bar */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#212121] via-[#212121]/90 to-transparent pt-12 pb-8 px-4">
+                            <div className="max-w-3xl mx-auto relative">
+                                <form
+                                    onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+                                    className="relative flex items-end gap-2 bg-[#2f2f2f] rounded-[24px] p-2 pl-4 pr-3 shadow-2xl border border-white/5 focus-within:border-white/10 transition-all"
+                                >
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleImageSelect}
+                                    />
+
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="mb-1 h-9 w-9 text-white/40 hover:text-white/90 hover:bg-white/5 rounded-full shrink-0"
+                                    >
+                                        <Paperclip className="w-5 h-5" />
+                                    </Button>
+
+                                    <textarea
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                // Prevent sending while composing (Vietnamese/Chinese/Japanese IME)
+                                                if (e.nativeEvent.isComposing) return;
+                                                e.preventDefault();
+                                                handleSend();
+                                            }
+                                        }}
+                                        onPaste={handlePaste}
+                                        placeholder="Message CFA AI Advisor..."
+                                        rows={1}
+                                        className="flex-1 bg-transparent border-0 focus:ring-0 text-white placeholder-white/20 py-3.5 resize-none max-h-48 custom-scrollbar min-h-[52px] text-[15px] leading-relaxed"
+                                    />
+
+                                    <Button
+                                        type="submit"
+                                        disabled={isLoading || (!input.trim() && !selectedImage)}
+                                        size="icon"
+                                        className="mb-1 h-9 w-9 rounded-full bg-white text-black hover:bg-white/90 disabled:bg-white/10 disabled:text-white/20 shadow-lg shrink-0"
+                                    >
+                                        {isLoading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Send className="w-5 h-5" />
+                                        )}
+                                    </Button>
+
+                                    {/* Image Preview */}
+                                    <AnimatePresence>
+                                        {selectedImage && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.9 }}
+                                                className="absolute bottom-full mb-4 left-4 p-2 bg-[#2f2f2f] border border-white/10 rounded-2xl shadow-2xl z-20 flex items-center gap-3 pr-4"
+                                            >
+                                                <div className="relative">
+                                                    <img src={selectedImage} alt="Preview" className="h-12 w-12 object-cover rounded-lg" />
+                                                    <button
+                                                        onClick={() => setSelectedImage(null)}
+                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
+                                                    >
+                                                        <X className="w-2.5 h-2.5" />
+                                                    </button>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-white">Image Attached</p>
+                                                    <p className="text-[10px] text-white/40 uppercase tracking-widest font-black">Ready for AI</p>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </form>
+                                <p className="text-[10px] text-white/20 text-center mt-3 font-medium">
+                                    CFA AI Bot can make mistakes. Always check important info.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Lightbox */}
+                <AnimatePresence>
+                    {lightboxImage && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="flex justify-start items-center gap-3"
+                            exit={{ opacity: 0 }}
+                            onClick={() => setLightboxImage(null)}
+                            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-8 cursor-zoom-out"
                         >
-                            <div className="w-10 h-10 rounded-2xl bg-muted border border-border/50 flex items-center justify-center shrink-0">
-                                <Bot className="w-5 h-5 text-indigo-500" />
-                            </div>
-                            <div className="bg-muted/30 p-6 rounded-[2.5rem] rounded-bl-none border border-border/50 backdrop-blur-md">
-                                <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
-                            </div>
+                            <motion.div
+                                initial={{ scale: 0.9, y: 20 }}
+                                animate={{ scale: 1, y: 0 }}
+                                exit={{ scale: 0.9, y: 20 }}
+                                className="relative max-w-full max-h-full flex items-center justify-center"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <img
+                                    src={lightboxImage}
+                                    className="max-w-full max-h-[85vh] rounded-2xl shadow-2xl border border-white/10"
+                                    alt="Enlarged view"
+                                />
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setLightboxImage(null)}
+                                    className="absolute -top-12 right-0 text-white hover:bg-white/10 rounded-full w-10 h-10"
+                                >
+                                    <X className="w-8 h-8" />
+                                </Button>
+                            </motion.div>
                         </motion.div>
                     )}
-                </div>
-
-                {/* Footer Input */}
-                <div className="p-8 bg-muted/20 border-t border-border/50 shrink-0 select-auto">
-                    <form
-                        onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                        className="relative max-w-5xl mx-auto"
-                    >
-                        {/* Image Preview Container */}
-                        <AnimatePresence>
-                            {selectedImage && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="absolute bottom-full mb-4 left-0 p-2 bg-background/80 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl flex items-center gap-3"
-                                >
-                                    <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-border/50">
-                                        <img src={selectedImage} alt="Selection preview" className="w-full h-full object-cover" />
-                                        <button
-                                            type="button"
-                                            onClick={() => setSelectedImage(null)}
-                                            className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                    <div className="pr-4">
-                                        <p className="text-sm font-bold text-foreground">Image Attached</p>
-                                        <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold opacity-60">Ready to analyze</p>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            accept="image/*"
-                            onChange={handleImageSelect}
-                        />
-
-                        <div className="relative flex items-center">
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => fileInputRef.current?.click()}
-                                className={`absolute left-2 w-12 h-12 rounded-[1rem] transition-all ${selectedImage ? 'text-indigo-500 bg-indigo-500/10' : 'text-muted-foreground hover:bg-muted'}`}
-                            >
-                                <Paperclip className="w-6 h-6" />
-                            </Button>
-
-                            <Input
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onPaste={handlePaste}
-                                placeholder={isActive ? "Ask about the current question or any CFA topic..." : "Talk to your AI Advisor about anything..."}
-                                disabled={isLoading}
-                                className="pr-16 pl-16 bg-background/50 border-border/50 rounded-[2rem] h-16 text-lg focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium placeholder:text-muted-foreground/50 shadow-inner outline-none"
-                            />
-
-                            <Button
-                                type="submit"
-                                size="icon"
-                                disabled={(!input.trim() && !selectedImage) || isLoading}
-                                className="absolute right-2 h-12 w-12 bg-gradient-to-br from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-[1.25rem] transition-all active:scale-95 shadow-lg shadow-indigo-500/20 group"
-                            >
-                                <Send className="w-6 h-6 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                            </Button>
-                        </div>
-                    </form>
-                </div>
+                </AnimatePresence>
             </DialogContent>
         </Dialog>
     );

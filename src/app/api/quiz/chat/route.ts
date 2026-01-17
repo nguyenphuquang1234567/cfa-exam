@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { messages, question, explanation, topic, options, isGlobal, image } = body;
+        const { messages, question, explanation, topic, options, isGlobal, image, sessionId } = body;
 
         if (!messages || !Array.isArray(messages)) {
             return NextResponse.json({ error: 'Invalid messages' }, { status: 400 });
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
             : "You are the Mentis AI Quiz Assistant. Your goal is to help the student master the specific question they are currently working on.";
 
         const currentTaskContext = isGlobal
-            ? (question ? `Background Context: The student is currently in a quiz session on the topic of "${topic}". They might ask questions related to this or broad CFA concepts.` : "Context: General CFA study session.")
+            ? (question ? `Background Context: The student is currently looking at this specific CFA question: "${question}". Topic: "${topic}". Options provided: A: ${options?.A}, B: ${options?.B}, C: ${options?.C}. Reference Explanation: "${explanation}". They might ask about this specific question or broader concepts.` : "Context: General CFA study session.")
             : `Primary Task: Help the student understand this specific question: "${question}". Explanation provided for your reference: "${explanation}". Options: A: ${options?.A}, B: ${options?.B}, C: ${options?.C}.`;
 
         const systemMessage = {
@@ -162,11 +162,46 @@ export async function POST(req: NextRequest) {
         const stream = new ReadableStream({
             async start(controller) {
                 const encoder = new TextEncoder();
+                let fullAiResponse = '';
                 try {
                     for await (const chunk of response) {
                         const content = (chunk.choices[0] as any)?.delta?.content || '';
                         if (content) {
+                            fullAiResponse += content;
                             controller.enqueue(encoder.encode(content));
+                        }
+                    }
+
+                    // After stream completes, save to DB if sessionId exists
+                    if (sessionId && isGlobal) {
+                        const lastUserMsg = messages[messages.length - 1];
+
+                        // 1. Save User Message (with image if present)
+                        await prisma.chatMessage.create({
+                            data: {
+                                sessionId,
+                                role: 'user',
+                                content: lastUserMsg.content,
+                                image: image || null
+                            }
+                        });
+
+                        // 2. Save Assistant Response
+                        await prisma.chatMessage.create({
+                            data: {
+                                sessionId,
+                                role: 'assistant',
+                                content: fullAiResponse
+                            }
+                        });
+
+                        // 3. Update Session Title if it's "New Chat"
+                        const session = await prisma.chatSession.findUnique({ where: { id: sessionId } });
+                        if (session?.title === 'New Chat') {
+                            await prisma.chatSession.update({
+                                where: { id: sessionId },
+                                data: { title: lastUserMsg.content.substring(0, 40) + (lastUserMsg.content.length > 40 ? '...' : '') }
+                            });
                         }
                     }
                 } catch (err) {
