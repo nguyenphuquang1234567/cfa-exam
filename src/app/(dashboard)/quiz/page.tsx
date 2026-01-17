@@ -75,14 +75,15 @@ export default function QuizPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [selectedMode, setSelectedMode] = useState('practice');
-  const [questionCount, setQuestionCount] = useState('10');
+  const [questionCount, setQuestionCount] = useState(isFreeUser ? '5' : '10');
   const [difficulty, setDifficulty] = useState('all');
 
   const {
     isActive: hasActiveQuiz,
     mode: activeMode,
+    quizId: activeQuizId,
     resetQuiz,
-    savedExamSession,
+    stashedExams,
     resumeExamSession,
     clearSavedExam
   } = useQuizStore();
@@ -91,7 +92,10 @@ export default function QuizPage() {
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    if (isFreeUser) {
+      setQuestionCount('5');
+    }
+  }, [isFreeUser]);
 
   // Use SWR for fetching data
   const { data: topics, isLoading: topicsLoading } = useAuthenticatedSWR<Topic[]>(
@@ -122,16 +126,31 @@ export default function QuizPage() {
   };
 
   const handleQuizStart = (url: string, isExamRequest: boolean = false) => {
-    // We only show the CONTINUE dialog if the user is explicitly trying to start/access an EXAM
-    // AND we have either an active exam or a saved background exam.
-    const hasExistingExam = (hasActiveQuiz && activeMode === 'EXAM') || savedExamSession !== null;
+    // Generate the internal quizId that will be used for this session
+    const urlObj = new URL(url, window.location.origin);
+    const params = urlObj.searchParams;
+    const queryTopics = params.get('topics') || 'all';
+    const queryMode = params.get('mode')?.toUpperCase() || 'PRACTICE';
+    const count = params.get('count') || '10';
+    const difficulty = params.get('difficulty') || 'all';
+    const examIndex = params.get('examIndex') || '1';
+    const studyPlanItemId = params.get('studyPlanItemId');
 
-    if (isExamRequest && hasExistingExam) {
+    const targetQuizId = `session-${queryTopics}-${queryMode}-${count}-${difficulty}${examIndex !== '1' ? `-exam-${examIndex}` : ''}${studyPlanItemId ? `-${studyPlanItemId}` : ''}`;
+
+    // Get the current quiz ID (either active or stashed)
+    const isAlreadyActive = hasActiveQuiz && activeQuizId === targetQuizId;
+    const isStashed = !!stashedExams[targetQuizId];
+
+    const canContinue = isAlreadyActive || isStashed;
+
+    // Only show CONTINUE dialgog if it's the SAME exam session
+    if (isExamRequest && canContinue) {
       setPendingQuizUrl(url);
       setShowContinueDialog(true);
     } else {
-      // For practice/timed sessions, we just go there.
-      // The store's startQuiz will automatically back up any active exam into savedExamSession.
+      // If it's a DIFFERENT exam or not an exam, just start it fresh.
+      // The store handles backgrounding any current exam.
       window.location.href = url;
     }
   };
@@ -311,7 +330,13 @@ export default function QuizPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="10">10 Questions</SelectItem>
+                      <SelectItem value="5">5 Questions</SelectItem>
+                      <SelectItem value="10" disabled={isFreeUser}>
+                        <div className="flex items-center justify-between w-full gap-2">
+                          <span>10 Questions</span>
+                          {isFreeUser && <Badge variant="secondary" className="bg-slate-800 text-slate-400 text-[8px] h-4 px-1 border-slate-700 ml-auto">PRO</Badge>}
+                        </div>
+                      </SelectItem>
                       <SelectItem value="20" disabled={isFreeUser}>
                         <div className="flex items-center justify-between w-full gap-2">
                           <span>20 Questions</span>
@@ -378,8 +403,33 @@ export default function QuizPage() {
                   </Button>
                 </div>
 
-                {/* Mock Exam Promo */}
-                <div className={`relative group p-[2px] rounded-3xl bg-gradient-to-r ${isFreeUser ? 'from-slate-700 to-slate-800' : 'from-red-600 via-rose-500 to-red-600'}`}>
+                {/* Mock Exam 1 */}
+                <div className="relative group p-[2px] rounded-3xl bg-gradient-to-r from-red-600 via-rose-500 to-red-600">
+                  <Button
+                    size="lg"
+                    className="relative w-full bg-slate-950 hover:bg-slate-900 text-white border-none h-20 rounded-[22px] transition-all"
+                    onClick={() => {
+                      if (!topics) return;
+                      const allTopicIds = topics.map((t) => t.id);
+                      handleQuizStart(`/quiz/session?topics=${allTopicIds.join(',')}&mode=exam&count=180&difficulty=all&examIndex=1`, true);
+                    }}
+                  >
+                    <div className="flex items-center justify-between w-full px-4">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-2xl bg-red-500/10">
+                          <Zap className="h-6 w-6 text-red-500 fill-red-500" />
+                        </div>
+                        <div className="text-left">
+                          <div className="text-xl font-black tracking-tight leading-none mb-1 uppercase text-white">Full Mock Exam 1</div>
+                          <div className="text-xs text-muted-foreground font-medium">180 Questions • Standard Set 1</div>
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
+                </div>
+
+                {/* Mock Exam 2 */}
+                <div className={`relative group p-[2px] rounded-3xl bg-gradient-to-r ${isFreeUser ? 'from-slate-700 to-slate-800' : 'from-indigo-600 via-purple-500 to-indigo-600'}`}>
                   <Button
                     size="lg"
                     className={`relative w-full bg-slate-950 hover:bg-slate-900 text-white border-none h-20 rounded-[22px] transition-all ${isFreeUser ? 'opacity-70 cursor-not-allowed' : ''}`}
@@ -387,25 +437,57 @@ export default function QuizPage() {
                       if (isFreeUser) return;
                       if (!topics) return;
                       const allTopicIds = topics.map((t) => t.id);
-                      handleQuizStart(`/quiz/session?topics=${allTopicIds.join(',')}&mode=exam&count=180&difficulty=all`, true);
+                      handleQuizStart(`/quiz/session?topics=${allTopicIds.join(',')}&mode=exam&count=180&difficulty=all&examIndex=2`, true);
                     }}
                     disabled={isFreeUser}
                   >
                     <div className="flex items-center justify-between w-full px-4">
                       <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-2xl ${isFreeUser ? 'bg-slate-800' : 'bg-red-500/10'}`}>
+                        <div className={`p-3 rounded-2xl ${isFreeUser ? 'bg-slate-800' : 'bg-indigo-500/10'}`}>
                           {isFreeUser ? (
                             <Lock className="h-6 w-6 text-slate-500" />
                           ) : (
-                            <Zap className="h-6 w-6 text-red-500 fill-red-500" />
+                            <Zap className="h-6 w-6 text-indigo-500 fill-indigo-500" />
                           )}
                         </div>
                         <div className="text-left">
-                          <div className={`text-xl font-black tracking-tight leading-none mb-1 uppercase ${isFreeUser ? 'text-slate-500' : 'text-white'}`}>Full Mock Exam</div>
-                          <div className="text-xs text-muted-foreground font-medium">180 Questions • All Topics • Exam Setting</div>
+                          <div className={`text-xl font-black tracking-tight leading-none mb-1 uppercase ${isFreeUser ? 'text-slate-500' : 'text-white'}`}>Full Mock Exam 2</div>
+                          <div className="text-xs text-muted-foreground font-medium">180 Questions • Standard Set 2</div>
                         </div>
                       </div>
-                      <Badge className={`${isFreeUser ? 'bg-slate-800 text-slate-500 border-slate-700' : 'bg-red-500/20 text-red-400 border-red-500/30'} font-black`}>PRO</Badge>
+                      {isFreeUser && <Badge className="bg-slate-800 text-slate-500 border-slate-700 font-black">PRO</Badge>}
+                    </div>
+                  </Button>
+                </div>
+
+                {/* Mock Exam 3 */}
+                <div className={`relative group p-[2px] rounded-3xl bg-gradient-to-r ${isFreeUser ? 'from-slate-700 to-slate-800' : 'from-emerald-600 via-green-500 to-emerald-600'}`}>
+                  <Button
+                    size="lg"
+                    className={`relative w-full bg-slate-950 hover:bg-slate-900 text-white border-none h-20 rounded-[22px] transition-all ${isFreeUser ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    onClick={() => {
+                      if (isFreeUser) return;
+                      if (!topics) return;
+                      const allTopicIds = topics.map((t) => t.id);
+                      handleQuizStart(`/quiz/session?topics=${allTopicIds.join(',')}&mode=exam&count=180&difficulty=all&examIndex=3`, true);
+                    }}
+                    disabled={isFreeUser}
+                  >
+                    <div className="flex items-center justify-between w-full px-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-2xl ${isFreeUser ? 'bg-slate-800' : 'bg-emerald-500/10'}`}>
+                          {isFreeUser ? (
+                            <Lock className="h-6 w-6 text-slate-500" />
+                          ) : (
+                            <Zap className="h-6 w-6 text-emerald-500 fill-emerald-500" />
+                          )}
+                        </div>
+                        <div className="text-left">
+                          <div className={`text-xl font-black tracking-tight leading-none mb-1 uppercase ${isFreeUser ? 'text-slate-500' : 'text-white'}`}>Full Mock Exam 3</div>
+                          <div className="text-xs text-muted-foreground font-medium">180 Questions • Standard Set 3</div>
+                        </div>
+                      </div>
+                      {isFreeUser && <Badge className="bg-slate-800 text-slate-500 border-slate-700 font-black">PRO</Badge>}
                     </div>
                   </Button>
                 </div>
@@ -484,12 +566,23 @@ export default function QuizPage() {
             <Button
               className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-indigo-500/20"
               onClick={() => {
-                // If the exam is already the active one, just go there.
-                // If it was stashed in savedExamSession, restore it first.
-                if (savedExamSession) {
-                  resumeExamSession();
+                if (!pendingQuizUrl) return;
+
+                const urlObj = new URL(pendingQuizUrl, window.location.origin);
+                const params = urlObj.searchParams;
+                const queryTopics = params.get('topics') || 'all';
+                const queryMode = (params.get('mode') || 'PRACTICE').toUpperCase();
+                const count = params.get('count') || '10';
+                const difficulty = params.get('difficulty') || 'all';
+                const examIndex = params.get('examIndex') || '1';
+                const studyPlanItemId = params.get('studyPlanItemId');
+                const targetQuizId = `session-${queryTopics}-${queryMode}-${count}-${difficulty}${examIndex !== '1' ? `-exam-${examIndex}` : ''}${studyPlanItemId ? `-${studyPlanItemId}` : ''}`;
+
+                if (stashedExams[targetQuizId]) {
+                  resumeExamSession(targetQuizId);
                 }
-                window.location.href = '/quiz/session?mode=exam';
+
+                window.location.href = pendingQuizUrl;
               }}
             >
               <PlayCircle className="h-6 w-6 fill-white" />
@@ -499,12 +592,25 @@ export default function QuizPage() {
               variant="outline"
               className="w-full h-14 border-slate-800 hover:bg-slate-900 text-slate-300 font-bold rounded-2xl flex items-center justify-center gap-3"
               onClick={() => {
-                // To restart: wipe both active and saved exam state
-                resetQuiz();
-                clearSavedExam();
-                if (pendingQuizUrl) {
-                  window.location.href = pendingQuizUrl;
+                if (!pendingQuizUrl) return;
+
+                const urlObj = new URL(pendingQuizUrl, window.location.origin);
+                const params = urlObj.searchParams;
+                const queryTopics = params.get('topics') || 'all';
+                const queryMode = (params.get('mode') || 'PRACTICE').toUpperCase();
+                const count = params.get('count') || '10';
+                const difficulty = params.get('difficulty') || 'all';
+                const examIndex = params.get('examIndex') || '1';
+                const studyPlanItemId = params.get('studyPlanItemId');
+                const targetQuizId = `session-${queryTopics}-${queryMode}-${count}-${difficulty}${examIndex !== '1' ? `-exam-${examIndex}` : ''}${studyPlanItemId ? `-${studyPlanItemId}` : ''}`;
+
+                // To restart: wipe any stashed or active version of THIS specific exam
+                if (activeQuizId === targetQuizId) {
+                  resetQuiz();
                 }
+                clearSavedExam(targetQuizId);
+
+                window.location.href = pendingQuizUrl;
               }}
             >
               <RotateCcw className="h-5 w-5" />

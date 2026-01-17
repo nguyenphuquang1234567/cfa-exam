@@ -29,6 +29,7 @@ model User {
   studyPlans         StudyPlan[]
   topicPerformances  TopicPerformance[]
   transactions       Transaction[]
+  chatSessions       ChatSession[]
 }
 
 model Topic {
@@ -349,4 +350,30 @@ model DocumentChunk {
   createdAt  DateTime @default(now())
 
   @@index([fileName])
+}
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  userId    String
+  title     String?       @default("New Chat")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+
+  @@index([userId])
+  @@index([updatedAt(sort: Desc)])
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  role      String      // 'user' or 'assistant'
+  content   String
+  image     String?     // Base64 or URL
+  createdAt DateTime    @default(now())
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([createdAt(sort: Asc)])
 }
