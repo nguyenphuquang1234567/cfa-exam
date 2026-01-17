@@ -24,17 +24,31 @@ export async function POST(req: NextRequest) {
         });
 
         const isFree = !user || user.subscription === 'FREE';
+        const isPro = user?.subscription === 'PRO';
 
         if (isFree) {
-            const limitResult = rateLimit(`chat_free_${userId}`, {
-                limit: 6,         // Only 6 messages
-                window: 3600000   // per hour
+            // Check sliding window limit for free users: 3 messages per 6 hours
+            const limitResult = rateLimit(`chat_free_6hr_${userId}`, {
+                limit: 3,         // Only 3 messages
+                window: 21600000  // 6 hours in milliseconds
             });
 
             if (!limitResult.success) {
                 return NextResponse.json({
-                    error: 'Free tier quota: 6 messages per hour. Upgrade to PRO to chat as much as you want!',
+                    error: 'Free tier quota: 3 messages every 6 hours. Upgrade to PRO to study with a massive 70 messages/day limit!',
                     isFree: true
+                }, { status: 429 });
+            }
+        } else if (isPro) {
+            const limitResult = rateLimit(`chat_pro_${userId}`, {
+                limit: 70,        // 70 messages
+                window: 86400000  // per 24 hours (1 day)
+            });
+
+            if (!limitResult.success) {
+                return NextResponse.json({
+                    error: 'PRO tier daily quota: 70 messages per day reached. You have studied exceptionally hard today! Please return tomorrow.',
+                    isPro: true
                 }, { status: 429 });
             }
         }

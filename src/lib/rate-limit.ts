@@ -51,6 +51,28 @@ export function rateLimit(ip: string, options: RateLimitOption) {
 }
 
 /**
+ * Check rate limit status without incrementing
+ */
+export function getLimitInfo(key: string, options: RateLimitOption) {
+    const now = Date.now();
+    const record = rateLimitMap.get(key);
+
+    if (!record || now > record.resetTime) {
+        return {
+            count: 0,
+            remaining: options.limit,
+            resetTime: now + options.window
+        };
+    }
+
+    return {
+        count: record.count,
+        remaining: Math.max(0, options.limit - record.count),
+        resetTime: record.resetTime
+    };
+}
+
+/**
  * Helper to get IP from request headers
  */
 export function getIP(req: Request): string {

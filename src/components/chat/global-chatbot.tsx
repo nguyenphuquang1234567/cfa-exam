@@ -280,6 +280,9 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
                 throw new Error(data.error || 'Failed to get response');
             }
 
+            // Sync navbar credits
+            window.dispatchEvent(new Event('chat-limit-updated'));
+
             setTimeout(fetchSessions, 5000);
             const reader = chatResponse.body?.getReader();
             if (!reader) throw new Error('No reader available');
