@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
             allow: '/',
             disallow: ['/api/', '/dashboard/'], // Chặn Google cào dữ liệu trong Dashboard riêng tư và API
         },
-        sitemap: 'https://cfa-exam.vercel.app/sitemap.xml',
-    };
+        sitemap: 'https://mentiscfa.org/sitemap.xml',
+    }; 
 }

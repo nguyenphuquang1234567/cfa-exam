@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { rateLimit } from '@/lib/rate-limit';
+import { persistentChatLimit } from '@/lib/rate-limit';
 import { verifyAuth, authErrorResponse } from '@/lib/server-auth-utils';
 
 export const runtime = 'nodejs';
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
         if (authResult.error) {
             return authErrorResponse(authResult as { error: string, status: number });
         }
-        const userId = authResult.uid;
+        const userId = authResult.uid as string;
 
         // 2. Check Subscription & Apply Strict Rate Limit for FREE users
         const { prisma } = await import('@/lib/prisma');
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
         if (isFree) {
             // Check sliding window limit for free users: 7 messages per 2 hours
-            const limitResult = rateLimit(`chat_free_2hr_${userId}`, {
+            const limitResult = await persistentChatLimit(userId, {
                 limit: 7,         // Now 7 messages
                 window: 7200000   // 2 hours in milliseconds
             });
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
                 }, { status: 429 });
             }
         } else if (isPro) {
-            const limitResult = rateLimit(`chat_pro_${userId}`, {
+            const limitResult = await persistentChatLimit(userId, {
                 limit: 75,        // 75 messages
                 window: 86400000  // per 24 hours (1 day)
             });
