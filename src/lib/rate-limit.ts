@@ -5,81 +5,134 @@ interface RateLimitOption {
     window: number;   // Window in milliseconds
 }
 
-// In-memory store for rate limiting (Note: This will reset on server restart)
-// Using global to persist across HMR in development
-const globalForRateLimit = global as unknown as {
-    rateLimitMap: Map<string, { count: number; resetTime: number }> | undefined
-};
+import { prisma } from '@/lib/prisma';
+import { User } from '@prisma/client';
 
-const rateLimitMap = globalForRateLimit.rateLimitMap ?? new Map<string, { count: number; resetTime: number }>();
-
-if (process.env.NODE_ENV !== 'production') {
-    globalForRateLimit.rateLimitMap = rateLimitMap;
-}
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 /**
- * Basic in-memory rate limiter
- * @param ip Client IP address
- * @param options Rate limit configuration
- * @returns { success: boolean, remaining: number, reset: number }
+ * Simple in-memory rate limiter for middleware (IP-based)
+ * NOT for persistent chat limits.
  */
-export function rateLimit(ip: string, options: RateLimitOption) {
-    const now = Date.now();
-    const record = rateLimitMap.get(ip);
-
-    // If no record or current time is past reset time, start new window
-    if (!record || now > record.resetTime) {
-        const newRecord = {
-            count: 1,
-            resetTime: now + options.window
-        };
-        rateLimitMap.set(ip, newRecord);
-        return {
-            success: true,
-            remaining: options.limit - 1,
-            reset: newRecord.resetTime
-        };
-    }
-
-    // Within window, check if limit exceeded
-    if (record.count >= options.limit) {
-        return {
-            success: false,
-            remaining: 0,
-            reset: record.resetTime
-        };
-    }
-
-    // Increment count
-    record.count += 1;
-    console.log(`[RateLimit] Key: ${ip} | Count: ${record.count}/${options.limit} | Remaining: ${options.limit - record.count}`);
-    return {
-        success: true,
-        remaining: options.limit - record.count,
-        reset: record.resetTime
-    };
-}
-
-/**
- * Check rate limit status without incrementing
- */
-export function getLimitInfo(key: string, options: RateLimitOption) {
+export function rateLimit(key: string, options: RateLimitOption) {
     const now = Date.now();
     const record = rateLimitMap.get(key);
 
     if (!record || now > record.resetTime) {
+        const newRecord = {
+            count: 1,
+            resetTime: now + options.window,
+        };
+        rateLimitMap.set(key, newRecord);
         return {
-            count: 0,
-            remaining: options.limit,
-            resetTime: now + options.window
+            success: true,
+            remaining: options.limit - 1,
+            reset: newRecord.resetTime,
         };
     }
 
-    console.log(`[LimitInfo] Key: ${key} | Current Count: ${record.count} | Remaining: ${Math.max(0, options.limit - record.count)}`);
+    if (record.count >= options.limit) {
+        return {
+            success: false,
+            remaining: 0,
+            reset: record.resetTime,
+        };
+    }
+
+    record.count++;
     return {
-        count: record.count,
-        remaining: Math.max(0, options.limit - record.count),
-        resetTime: record.resetTime
+        success: true,
+        remaining: options.limit - record.count,
+        reset: record.resetTime,
+    };
+}
+
+/**
+ * Persistent Chat Rate Limiter using Prisma
+ * Specifically for tracking AI chat messages bucket.
+ */
+export async function persistentChatLimit(userId: string, options: RateLimitOption) {
+    const now = Date.now();
+
+    // Fetch user's current limit status
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { chatCount: true, chatResetTime: true }
+    });
+
+    if (!user) {
+        return { success: false, remaining: 0, reset: now + options.window };
+    }
+
+    const resetTime = user.chatResetTime ? user.chatResetTime.getTime() : 0;
+
+    // Check if we need to reset the window
+    if (now > resetTime) {
+        const newResetTime = new Date(now + options.window);
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                chatCount: 1,
+                chatResetTime: newResetTime
+            }
+        });
+
+        return {
+            success: true,
+            remaining: options.limit - 1,
+            reset: newResetTime.getTime()
+        };
+    }
+
+    // Within window, check limit
+    if (user.chatCount >= options.limit) {
+        return {
+            success: false,
+            remaining: 0,
+            reset: resetTime
+        };
+    }
+
+    // Increment count in DB
+    await prisma.user.update({
+        where: { id: userId },
+        data: {
+            chatCount: { increment: 1 }
+        }
+    });
+
+    return {
+        success: true,
+        remaining: options.limit - (user.chatCount + 1),
+        reset: resetTime
+    };
+}
+
+/**
+ * Check rate limit status without incrementing (using Prisma)
+ */
+export async function getLimitInfo(userId: string, options: RateLimitOption) {
+    const now = Date.now();
+
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { chatCount: true, chatResetTime: true }
+    });
+
+    if (!user) {
+        return { count: 0, remaining: options.limit, resetTime: now + options.window };
+    }
+
+    const resetTime = user.chatResetTime ? user.chatResetTime.getTime() : 0;
+
+    if (now > resetTime) {
+        return { count: 0, remaining: options.limit, resetTime: now + options.window };
+    }
+
+    return {
+        count: user.chatCount,
+        remaining: Math.max(0, options.limit - user.chatCount),
+        resetTime: resetTime
     };
 }
 
@@ -91,5 +144,7 @@ export function getIP(req: Request): string {
     if (forwarded) {
         return forwarded.split(',')[0].trim();
     }
-    return '127.0.0.1'; // Fallback for local dev
+    // @ts-ignore - for development environment
+    const socketAddr = req.socket?.remoteAddress;
+    return socketAddr || '127.0.0.1';
 }

@@ -87,7 +87,7 @@ export function Navbar() {
     window.addEventListener('chat-limit-updated', handleRefresh);
     fetchChatLimit();
     return () => window.removeEventListener('chat-limit-updated', handleRefresh);
-  }, [user, pathname]); // Re-fetch on path change is a simple way to update since chat api is called from other components
+  }, [user]); // Removed pathname to stop spamming API on navigation
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">

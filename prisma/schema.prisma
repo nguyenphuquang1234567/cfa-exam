@@ -20,6 +20,11 @@ model User {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   coins              Int                @default(0)
+
+  // Chat Limit Tracking
+  chatCount          Int                @default(0)
+  chatResetTime      DateTime?          @default(now())
+
   currentStreak      Int                @default(0)
   lastActiveAt       DateTime?
   longestStreak      Int                @default(0)

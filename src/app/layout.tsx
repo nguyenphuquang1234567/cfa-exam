@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     default: 'MentisAI | Master Your CFA Exam',
     template: '%s | MentisAI'
   },
-  metadataBase: new URL('https://cfa-exam.vercel.app'),
+  metadataBase: new URL('https://mentiscfa.org'),
   description: 'AI-powered CFA exam preparation with MCQ and Item Sets. Get personalized feedback and track your progress with our smart study plan.',
   keywords: ['CFA Exam Prep', 'CFA Level 1', 'CFA Practice Questions', 'MentisAI', 'Financial Analyst Training', 'CFA Study Plan'],
   authors: [{ name: 'MentisAI Team' }],
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://cfa-exam.vercel.app',
+    url: 'https://mentiscfa.org',
     title: 'MentisAI | Master Your CFA Exam',
     description: 'The most advanced AI platform for CFA preparation.',
     siteName: 'MentisAI',

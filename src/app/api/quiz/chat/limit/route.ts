@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     try {
         const authResult = await verifyAuth(req);
         if (authResult.error) return authErrorResponse(authResult as any);
-        const userId = authResult.uid;
+        const userId = authResult.uid as string;
 
         const { prisma } = await import('@/lib/prisma');
         const user = await prisma.user.findUnique({
@@ -24,15 +24,18 @@ export async function GET(req: NextRequest) {
         const isPro = user?.subscription === 'PRO';
 
         let limitInfo;
+        // getLimitInfo is now async and takes userId directly
         if (isFree) {
+            const info = await getLimitInfo(userId, { limit: 7, window: 7200000 });
             limitInfo = {
-                ...getLimitInfo(`chat_free_2hr_${userId}`, { limit: 7, window: 7200000 }),
+                ...info,
                 type: 'FREE',
                 limit: 7
             };
         } else {
+            const info = await getLimitInfo(userId, { limit: 75, window: 86400000 });
             limitInfo = {
-                ...getLimitInfo(`chat_pro_${userId}`, { limit: 75, window: 86400000 }),
+                ...info,
                 type: 'PRO',
                 limit: 75
             };
