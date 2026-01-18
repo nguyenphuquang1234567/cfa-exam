@@ -561,8 +561,8 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
                             <div className="max-w-4xl mx-auto py-8">
                                 {messages.length === 0 && (
                                     <div className="flex flex-col items-center justify-center py-32 text-center space-y-6">
-                                        <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center text-muted-foreground/30 border border-border">
-                                            <Bot className="w-8 h-8" />
+                                        <div className="w-20 h-20 rounded-3xl bg-accent flex items-center justify-center p-1.5 border border-border shadow-xl hover:scale-105 transition-transform duration-500">
+                                            <img src="/images/ai-avatar.png" alt="AI Advisor" className="w-full h-full object-contain rounded-2xl" />
                                         </div>
                                         <h2 className="text-3xl font-bold tracking-tight text-foreground">
                                             How can I help you?
@@ -575,8 +575,8 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
                                         <div className={`max-w-3xl mx-auto px-4 py-8 flex gap-4 md:gap-6 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
                                             <div className="shrink-0">
                                                 {m.role === 'assistant' ? (
-                                                    <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center border border-white/10 shadow-lg">
-                                                        <Bot className="w-5 h-5 text-white" />
+                                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-white/10 shadow-lg p-0.5 bg-background">
+                                                        <img src="/images/ai-avatar.png" alt="AI Advisor" className="w-full h-full object-contain rounded-lg" />
                                                     </div>
                                                 ) : (
                                                     <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center border border-white/10 shadow-lg text-[10px] font-bold text-white uppercase text-center">
@@ -619,8 +619,8 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
                                     <div className="group w-full">
                                         <div className="max-w-3xl mx-auto px-4 py-8 flex gap-6">
                                             <div className="shrink-0 animate-pulse">
-                                                <div className="w-8 h-8 rounded-lg bg-emerald-600/50 flex items-center justify-center border border-border">
-                                                    <Bot className="w-5 h-5 text-white/50" />
+                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-border p-0.5 bg-background">
+                                                    <img src="/images/ai-avatar.png" alt="AI Advisor" className="w-full h-full object-contain rounded-lg opacity-50 contrast-50" />
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1.5 py-2">
