@@ -12,6 +12,7 @@ import {
   Flame,
   Award,
 } from 'lucide-react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -113,14 +114,35 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
         <div className="flex-1">
-          <motion.h1
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-4xl font-extrabold text-foreground tracking-tight"
-          >
-            Welcome Back, {isLoading ? <Skeleton className="inline-block h-10 w-48 align-middle rounded-lg" /> : displayName} 👋
-          </motion.h1>
-          <div className="mt-2">
+          <div className="relative inline-flex flex-col items-center lg:items-start">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{
+                delay: 0.2,
+                type: 'spring',
+                stiffness: 100,
+                damping: 20
+              }}
+              className="absolute -top-20 left-[60%] -translate-x-1/2 lg:left-2/3 lg:-translate-x-1/2 w-56 h-56 pointer-events-none z-0"
+            >
+              <Image
+                src="/images/mascot.png"
+                alt="Cerberus Mascot"
+                width={192}
+                height={192}
+                className="opacity-40 grayscale-[0.2] brightness-125 mix-blend-screen"
+              />
+            </motion.div>
+            <motion.h1
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight relative z-10 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
+            >
+              Welcome Back, {isLoading ? <Skeleton className="inline-block h-10 w-48 align-middle rounded-lg" /> : displayName} 👋
+            </motion.h1>
+          </div>
+          <div className="mt-4 text-center lg:text-left">
             {isLoading ? (
               <Skeleton className="h-6 w-64 rounded-md" />
             ) : (
