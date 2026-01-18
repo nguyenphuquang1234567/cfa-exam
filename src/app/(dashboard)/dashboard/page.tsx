@@ -113,44 +113,22 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
-        <div className="flex flex-col lg:flex-row items-center lg:items-center gap-6 flex-1">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0, x: -20 }}
-            animate={{ scale: 1, opacity: 1, x: 0 }}
-            transition={{
-              delay: 0.2,
-              type: 'spring',
-              stiffness: 150,
-              damping: 20
-            }}
-            className="w-24 h-24 lg:w-32 lg:h-32 flex-shrink-0"
+        <div className="flex-1">
+          <motion.h1
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-4xl font-extrabold text-foreground tracking-tight"
           >
-            <Image
-              src="/images/mascot.png"
-              alt="Cerberus Mascot"
-              width={128}
-              height={128}
-              className="w-full h-full object-contain mix-blend-screen brightness-125"
-            />
-          </motion.div>
-
-          <div className="flex-1">
-            <motion.h1
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-4xl lg:text-5xl font-black text-foreground tracking-tight text-center lg:text-left"
-            >
-              Welcome Back, {isLoading ? <Skeleton className="inline-block h-10 w-48 align-middle rounded-lg" /> : displayName} 👋
-            </motion.h1>
-            <div className="mt-2 text-center lg:text-left">
-              {isLoading ? (
-                <Skeleton className="h-6 w-64 rounded-md mx-auto lg:mx-0" />
-              ) : (
-                <p className="text-muted-foreground text-lg">
-                  It&apos;s <span className="text-indigo-400 font-semibold">{daysLeft} days</span> until {examLabel === 'My Custom Study Plan' || examLabel === 'Select Date' ? 'your exam' : examLabel}
-                </p>
-              )}
-            </div>
+            Welcome Back, {isLoading ? <Skeleton className="inline-block h-10 w-48 align-middle rounded-lg" /> : displayName} 👋
+          </motion.h1>
+          <div className="mt-2">
+            {isLoading ? (
+              <Skeleton className="h-6 w-64 rounded-md" />
+            ) : (
+              <p className="text-muted-foreground text-lg">
+                It&apos;s <span className="text-indigo-400 font-semibold">{daysLeft} days</span> until {examLabel === 'My Custom Study Plan' || examLabel === 'Select Date' ? 'your exam' : examLabel}
+              </p>
+            )}
           </div>
         </div>
 
