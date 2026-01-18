@@ -155,8 +155,8 @@ export function QuizAIAssistant({ question, explanation, options, topic, current
         >
             {/* Header */}
             <div className="p-4 border-b border-border/50 bg-indigo-500/5 flex items-center gap-3 select-auto">
-                <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-background flex items-center justify-center border border-border/50 p-1 shadow-inner">
+                    <img src="/images/ai-avatar.png" alt="AI Advisor" className="w-full h-full object-contain rounded-lg" />
                 </div>
                 <div>
                     <h3 className="text-sm font-bold text-foreground">Mentis AI Tutor</h3>

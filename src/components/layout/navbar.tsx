@@ -163,7 +163,9 @@ export function Navbar() {
               whileHover={{ scale: 1.05 }}
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500"
             >
-              <Coins className="h-4 w-4 fill-amber-500" />
+              <div className="w-5 h-5 flex items-center justify-center shrink-0 rounded-full overflow-hidden">
+                <img src="/images/coin-icon.png" alt="Coins" className="w-full h-full object-cover scale-150" />
+              </div>
               <span className="text-sm font-bold">{dbUser?.coins || 0}</span>
             </motion.div>
 
@@ -179,7 +181,9 @@ export function Navbar() {
                 )}
                 title={chatLimit.type === 'PRO' ? "Daily AI Credits (75 per day)" : "Trial Credits (7 per 2h)"}
               >
-                <Bot className="h-4 w-4" />
+                <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                  <img src="/images/ai-avatar.png" alt="AI" className="w-full h-full object-contain" />
+                </div>
                 <span className="text-sm font-bold">{chatLimit.remaining}/{chatLimit.limit}</span>
               </motion.div>
             )}
@@ -192,7 +196,9 @@ export function Navbar() {
               className="rounded-full bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition-all shadow-lg shadow-indigo-500/5 group"
               onClick={() => setIsChatOpen(true)}
             >
-              <Bot className="h-5 w-5 group-hover:scale-110 transition-transform" />
+              <div className="w-full h-full p-1.5 group-hover:scale-110 transition-transform">
+                <img src="/images/ai-avatar.png" alt="Chat" className="w-full h-full object-contain" />
+              </div>
             </Button>
 
             <DropdownMenu>
