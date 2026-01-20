@@ -8,6 +8,7 @@ interface User {
   cfaLevel: 'LEVEL_1' | 'LEVEL_2' | 'LEVEL_3';
   subscription: 'FREE' | 'PRO';
   coins: number;
+  hasCompletedOnboarding: boolean;
 }
 
 interface UserState {

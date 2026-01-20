@@ -22,13 +22,13 @@ import { Progress } from '@/components/ui/progress';
 import { useExamStore } from '@/store/exam-store';
 
 const mainNavItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
-  { href: '/lessons', label: 'Lessons', icon: Library },
-  { href: '/mistakes', label: 'Mistakes Bank', icon: Target },
-  { href: '/quiz', label: 'Practice Quiz', icon: BookOpen },
-  { href: '/item-sets', label: 'Item Sets', icon: FileText },
-  { href: '/analytics', label: 'Analytics', icon: TrendingUp },
-  { href: '/study-plan', label: 'Study Plan', icon: Calendar },
+  { href: '/dashboard', label: 'Dashboard', icon: BarChart3, id: 'tour-dashboard' },
+  { href: '/lessons', label: 'Lessons', icon: Library, id: 'tour-lessons' },
+  { href: '/mistakes', label: 'Mistakes Bank', icon: Target, id: 'tour-mistakes' },
+  { href: '/quiz', label: 'Practice Quiz', icon: BookOpen, id: 'tour-quiz' },
+  { href: '/item-sets', label: 'Item Sets', icon: FileText, id: 'tour-item-sets' },
+  { href: '/analytics', label: 'Analytics', icon: TrendingUp, id: 'tour-analytics' },
+  { href: '/study-plan', label: 'Study Plan', icon: Calendar, id: 'tour-study-plan' },
 ];
 
 const bottomNavItems = [
@@ -134,6 +134,7 @@ export function Sidebar() {
             return (
               <Link key={item.href} href={item.href}>
                 <motion.div
+                  id={item.id}
                   className={cn(
                     'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all',
                     isActive
