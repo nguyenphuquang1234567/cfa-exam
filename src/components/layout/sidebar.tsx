@@ -20,6 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { useExamStore } from '@/store/exam-store';
+import { FeedbackModal } from '@/components/feedback-modal';
 
 const mainNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: BarChart3, id: 'tour-dashboard' },
@@ -32,7 +33,7 @@ const mainNavItems = [
 ];
 
 const bottomNavItems = [
-  { href: '/feedback', label: 'Feedback', icon: MessageSquare },
+  { label: 'Feedback', icon: MessageSquare, id: 'btn-feedback' },
   { href: '/help', label: 'Help & Support', icon: HelpCircle },
 ];
 
@@ -52,6 +53,7 @@ export function Sidebar() {
     correctToday: 0,
     coins: 0,
   });
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const dbUser = useUserStore((state) => state.user);
 
   useEffect(() => {
@@ -169,8 +171,22 @@ export function Sidebar() {
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
 
+            if (item.id === 'btn-feedback') {
+              return (
+                <motion.div
+                  key={item.label}
+                  onClick={() => setIsFeedbackOpen(true)}
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all cursor-pointer"
+                  whileHover={{ x: 4 }}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </motion.div>
+              );
+            }
+
             return (
-              <Link key={item.href} href={item.href}>
+              <Link key={item.label} href={item.href || '#'}>
                 <motion.div
                   className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
                   whileHover={{ x: 4 }}
@@ -183,6 +199,11 @@ export function Sidebar() {
           })}
         </div>
       </div>
+
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+      />
     </aside>
   );
 }
