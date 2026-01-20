@@ -14,19 +14,19 @@ interface FeedbackModalProps {
 }
 
 const categories = [
-    { id: 'general', label: 'Overall App' },
-    { id: 'quiz', label: 'Quiz & Practice' },
-    { id: 'study', label: 'Study Material' },
-    { id: 'performance', label: 'Performance Tracker' },
-    { id: 'ai', label: 'AI Assistance' },
-    { id: 'other', label: 'Something Else' }
+    { id: 'GENERAL', label: 'Overall App' },
+    { id: 'CONTENT', label: 'Quiz & Study' },
+    { id: 'UI_UX', label: 'UI & Performance' },
+    { id: 'AI_ACCURACY', label: 'AI Assistance' },
+    { id: 'BUG', label: 'Found a Bug' },
+    { id: 'FEATURE_REQUEST', label: 'New Feature' }
 ];
 
 export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) => {
     const { user } = useAuth();
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
-    const [category, setCategory] = useState('general');
+    const [category, setCategory] = useState('GENERAL');
     const [strengths, setStrengths] = useState('');
     const [weaknesses, setWeaknesses] = useState('');
     const [bugs, setBugs] = useState('');
@@ -43,7 +43,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
         if (isOpen) {
             setRating(0);
             setHoverRating(0);
-            setCategory('general');
+            setCategory('GENERAL');
             setStrengths('');
             setWeaknesses('');
             setBugs('');
@@ -67,9 +67,13 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
         if (rating === 0) return;
         setIsSubmitting(true);
         try {
+            const token = user ? await user.getIdToken() : '';
             const res = await fetch('/api/feedback', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     rating,
                     category,
