@@ -2,6 +2,7 @@
 
 import { Navbar } from '@/components/layout/navbar';
 import { Sidebar } from '@/components/layout/sidebar';
+import { OnboardingTour } from '@/components/layout/onboarding-tour';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -48,6 +49,7 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-background">
       <Navbar />
       <Sidebar />
+      <OnboardingTour />
       <main className="pt-16 lg:pl-64">
         <div className="p-6 lg:p-8">{children}</div>
       </main>

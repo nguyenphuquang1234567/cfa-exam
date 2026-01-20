@@ -18,7 +18,7 @@ export async function verifyAuth(req: Request, targetUserId?: string | null) {
             return { error: 'Forbidden: Access denied', status: 403 };
         }
 
-        return { uid: decodedToken.uid, error: null };
+        return { uid: decodedToken.uid, email: decodedToken.email, error: null };
     } catch (error) {
         console.error('Auth verification failed:', error);
         return { error: 'Unauthorized: Invalid token', status: 401 };
