@@ -11,18 +11,75 @@ import { Label } from '@/components/ui/label';
 import { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword } from '@/lib/auth-utils';
 import { useRouter } from 'next/navigation';
 
+import { useUserStore } from '@/store/user-store';
+
 export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSignUp, setIsSignUp] = useState(false);
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
+    const [referralCode, setReferralCode] = useState('');
+    const [showReferralInput, setShowReferralInput] = useState(false);
     const router = useRouter();
 
     const handleGoogleSignIn = async () => {
         setIsLoading(true);
         try {
-            await signInWithGoogle();
+            // Pre-check referral code if provided
+            if (referralCode.trim()) {
+                const checkRes = await fetch('/api/auth/verify-referral', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: referralCode.trim() })
+                });
+                const checkData = await checkRes.json();
+
+                if (!checkData.valid) {
+                    setIsLoading(false);
+                    alert('Invalid Referral Code. Please check again or leave it empty.');
+                    return;
+                }
+            }
+
+            const result = await signInWithGoogle();
+            const firebaseUser = result; // signInWithGoogle returns User directly
+
+            // Sync user data to backend with referral code
+            if (firebaseUser) {
+                const token = await firebaseUser.getIdToken();
+                const res = await fetch('/api/user/sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email,
+                        name: firebaseUser.displayName,
+                        image: firebaseUser.photoURL,
+                        referralCode: referralCode.trim() || undefined,
+                    }),
+                });
+
+                if (res.ok) {
+                    const userData = await res.json();
+                    useUserStore.getState().setUser(userData);
+
+                    // Show detailed feedback based on referral result
+                    if (referralCode.trim()) {
+                        if (userData.referralResult === 'SUCCESS') {
+                            // alert('Referral code applied successfully! You have 7 days of PRO access.');
+                        } else if (userData.referralResult === 'ALREADY_PRO') {
+                            alert('Note: Referral code not applied because you are already a PRO member.');
+                        } else if (userData.referralResult === 'ALREADY_REDEEMED') {
+                            alert('Note: You have already redeemed a referral code previously.');
+                        }
+                    }
+                }
+            }
+
             router.push('/dashboard');
         } catch (error) {
             console.error(error);
@@ -41,6 +98,22 @@ export default function LoginPage() {
 
         setIsLoading(true);
         try {
+            // Pre-check referral code if provided
+            if (isSignUp && referralCode.trim()) {
+                const checkRes = await fetch('/api/auth/verify-referral', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: referralCode.trim() })
+                });
+                const checkData = await checkRes.json();
+
+                if (!checkData.valid) {
+                    setIsLoading(false);
+                    alert('Invalid Referral Code. Please check again or leave it empty.');
+                    return;
+                }
+            }
+
             let firebaseUser;
             if (isSignUp) {
                 firebaseUser = await signUpWithEmail(email, password, name);
@@ -52,7 +125,7 @@ export default function LoginPage() {
             // Manually trigger sync to store data in Supabase
             if (firebaseUser) {
                 const token = await firebaseUser.getIdToken();
-                await fetch('/api/user/sync', {
+                const res = await fetch('/api/user/sync', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -64,8 +137,25 @@ export default function LoginPage() {
                         name: isSignUp ? name : firebaseUser.displayName,
                         image: firebaseUser.photoURL,
                         password: password, // Send password to be hashed and stored
+                        referralCode: isSignUp ? referralCode : undefined,
                     }),
                 });
+
+                if (res.ok) {
+                    const userData = await res.json();
+                    useUserStore.getState().setUser(userData);
+
+                    // Show detailed feedback based on referral result
+                    if (isSignUp && referralCode.trim()) {
+                        if (userData.referralResult === 'SUCCESS') {
+                            // alert('Referral code applied successfully!');
+                        } else if (userData.referralResult === 'ALREADY_PRO') {
+                            alert('Note: Referral code not applied because you are already a PRO member.');
+                        } else if (userData.referralResult === 'ALREADY_REDEEMED') {
+                            alert('Note: You have already redeemed a referral code previously.');
+                        }
+                    }
+                }
             }
 
             router.push('/dashboard');
@@ -154,7 +244,43 @@ export default function LoginPage() {
                             Continue with Google
                         </Button>
 
-                        <div className="relative my-8">
+                        {/* Referral Code Toggle */}
+                        <div className="text-center">
+                            <button
+                                onClick={() => setShowReferralInput(!showReferralInput)}
+                                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                            >
+                                {showReferralInput ? '- Hide referral code' : '+ Have a referral code?'}
+                            </button>
+                        </div>
+
+                        {/* Referral Code Input */}
+                        <motion.div
+                            initial={false}
+                            animate={{
+                                height: showReferralInput ? 'auto' : 0,
+                                opacity: showReferralInput ? 1 : 0
+                            }}
+                            className="overflow-hidden"
+                            style={{ overflow: 'hidden' }}
+                        >
+                            <div className="relative mb-2">
+                                <div className="absolute left-3 top-3 h-5 w-5 flex items-center justify-center">
+                                    <span className="text-slate-500 font-bold text-xs">#</span>
+                                </div>
+                                <Input
+                                    id="referralCode"
+                                    name="referralCode"
+                                    type="text"
+                                    value={referralCode}
+                                    onChange={(e) => setReferralCode(e.target.value)}
+                                    placeholder="Enter referral code"
+                                    className="pl-10 h-10 bg-white/5 border-white/10 text-white rounded-xl focus:ring-indigo-500/50 text-sm"
+                                />
+                            </div>
+                        </motion.div>
+
+                        <div className="relative my-4">
                             <div className="absolute inset-0 flex items-center">
                                 <span className="w-full border-t border-white/10" />
                             </div>
@@ -204,6 +330,9 @@ export default function LoginPage() {
                                     />
                                 </div>
                             </div>
+
+                            {/* Removed duplicate Referral Code input */}
+
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between ml-1">
                                     <Label htmlFor="password" title="Password feature coming soon" className="text-slate-300">Password</Label>

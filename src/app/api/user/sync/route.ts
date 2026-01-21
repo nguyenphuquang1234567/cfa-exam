@@ -28,7 +28,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { uid, email, name, image, password } = body;
+        const { uid, email, name, image, password, referralCode } = body;
 
         const authResult = await verifyAuth(req, uid);
         if (authResult.error) return authErrorResponse(authResult);
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
         const existingUser = await prisma.user.findUnique({
             where: { email: normalizedEmail },
-            select: { currentStreak: true, longestStreak: true, lastActiveAt: true, password: true }
+            select: { currentStreak: true, longestStreak: true, lastActiveAt: true, password: true, hasRedeemedReferral: true, subscription: true }
         });
 
         // --- Streak Calculation Logic ---
@@ -87,6 +87,17 @@ export async function POST(req: Request) {
         // Only update password if user doesn't have one or if it's a new user
         const shouldUpdatePassword = hashedEmailPassword && (!existingUser || !existingUser.password);
 
+        // Check Referral Code
+        const isReferralValid = referralCode === 'mentis1321';
+
+        // Can only redeem if:
+        // 1. Valid code
+        // 2. Has NOT redeemed before
+        // 3. Is currently FREE (don't downgrade PRO/LIFETIME users)
+        const canRedeem = isReferralValid &&
+            (!existingUser || !existingUser.hasRedeemedReferral) &&
+            (!existingUser || existingUser.subscription === 'FREE');
+
         const user = await (prisma.user.upsert as any)({
             where: { email: normalizedEmail },
             update: {
@@ -96,6 +107,12 @@ export async function POST(req: Request) {
                 currentStreak: newStreak,
                 longestStreak: newLongestStreak,
                 ...(shouldUpdatePassword ? { password: hashedEmailPassword } : {}),
+                // Apply PRO only if eligible
+                ...(canRedeem ? {
+                    subscription: 'PRO',
+                    subscriptionEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    hasRedeemedReferral: true
+                } : {})
             },
             create: {
                 id: uid,
@@ -106,6 +123,9 @@ export async function POST(req: Request) {
                 currentStreak: 1,
                 longestStreak: 1,
                 password: hashedEmailPassword,
+                subscription: isReferralValid ? 'PRO' : 'FREE',
+                subscriptionEndsAt: isReferralValid ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null,
+                hasRedeemedReferral: isReferralValid
             },
         });
 
@@ -121,11 +141,22 @@ export async function POST(req: Request) {
                         subscriptionEndsAt: null,
                     }
                 });
-                return NextResponse.json(downgradedUser);
             }
         }
 
-        return NextResponse.json(user);
+        // Determine referral result string for frontend feedback
+        let referralResult = null;
+        if (referralCode === 'mentis1321') {
+            if (canRedeem) {
+                referralResult = 'SUCCESS';
+            } else if (existingUser && existingUser.hasRedeemedReferral) {
+                referralResult = 'ALREADY_REDEEMED';
+            } else if (existingUser && existingUser.subscription !== 'FREE') {
+                referralResult = 'ALREADY_PRO';
+            }
+        }
+
+        return NextResponse.json({ ...user, referralResult });
     } catch (error) {
         console.error('Error syncing user:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
