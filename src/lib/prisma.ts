@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
+// Force reload after schema change
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };

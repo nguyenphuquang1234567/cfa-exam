@@ -38,6 +38,7 @@ model User {
   wrongQuestions         WrongQuestion[]
   feedbacks              Feedback[]
   supportMessages        SupportMessage[]
+  hasRedeemedReferral    Boolean          @default(false)
 }
 
 model SupportMessage {
