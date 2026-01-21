@@ -12,12 +12,12 @@ async function isAdmin(uid: string) {
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { userId: string } }
+    { params }: { params: Promise<{ userId: string }> }
 ) {
     const auth = await verifyAuth(req);
     if (auth.error) return authErrorResponse(auth);
 
-    const { userId } = params;
+    const { userId } = await params;
 
     try {
         if (!(await isAdmin(auth.uid!))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
