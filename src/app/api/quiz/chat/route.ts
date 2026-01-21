@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
             messages: chatMessages as any,
             max_completion_tokens: 4096,
             stream: true,
-            temperature: 0.3, // Lower temp for CFA precision
+            // temperature: 0.3, // REMOVED: o-series models don't support temperature
         }).catch(err => {
             console.error('[OpenAI API Error]', err);
             throw err;
