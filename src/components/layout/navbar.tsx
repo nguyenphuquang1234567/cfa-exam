@@ -372,7 +372,7 @@ export function Navbar() {
               </div>
             )}
 
-            {!pathname?.includes('/admin') && (
+            {dbUser?.role !== 'ADMIN' && (
               <>
                 <button
                   onClick={() => {

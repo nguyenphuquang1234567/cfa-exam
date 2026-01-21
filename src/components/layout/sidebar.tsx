@@ -210,7 +210,7 @@ export function Sidebar() {
         )}
 
         {/* Bottom Navigation - Hidden on admin pages for cleaner focus */}
-        {!(pathname?.includes('/admin')) && (
+        {dbUser?.role !== 'ADMIN' && (
           <div className="pt-4 border-t border-border space-y-1">
             {bottomNavItems.map((item) => {
               const Icon = item.icon;
