@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Bot, User, Loader2, Sparkles, MessageCircle } from 'lucide-react';
@@ -155,8 +157,8 @@ export function QuizAIAssistant({ question, explanation, options, topic, current
         >
             {/* Header */}
             <div className="p-4 border-b border-border/50 bg-indigo-500/5 flex items-center gap-3 select-auto">
-                <div className="w-10 h-10 rounded-xl bg-background flex items-center justify-center border border-border/50 p-1 shadow-inner">
-                    <img src="/images/ai-avatar.png" alt="AI Advisor" className="w-full h-full object-contain rounded-lg" />
+                <div className="w-10 h-10 rounded-xl bg-background flex items-center justify-center border border-border/50 p-1 shadow-inner relative overflow-hidden">
+                    <Image src="/images/ai-avatar.png" alt="AI Advisor" fill className="object-contain rounded-lg" />
                 </div>
                 <div>
                     <h3 className="text-sm font-bold text-foreground">Mentis AI Tutor</h3>

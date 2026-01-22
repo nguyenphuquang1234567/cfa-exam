@@ -1,5 +1,5 @@
-'use client';
-
+import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Bot, User, Loader2, Sparkles, MessageCircle, X, Trash2, RotateCcw, ImageIcon, Paperclip, UploadCloud, ChevronDown, History, Settings, Search, Edit2, Check, Menu } from 'lucide-react';
@@ -10,12 +10,7 @@ import { useAuth } from '@/context/auth-context';
 import { useQuizStore } from '@/store/quiz-store';
 import { useUserStore } from '@/store/user-store';
 import { useChatStore, ChatSession, Message } from '@/store/chat-store';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
-
-
+import { ChatMessage } from './chat-message';
 
 interface GlobalChatbotProps {
     isOpen: boolean;
@@ -27,15 +22,6 @@ const getInitials = (name?: string | null) => {
     const parts = name.split(' ');
     if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     return name.slice(0, 2).toUpperCase();
-};
-
-const formatMath = (content: string) => {
-    return content
-        .replace(/\\\[/g, '$$$$')
-        .replace(/\\\]/g, '$$$$')
-        .replace(/\\\(/g, '$')
-        .replace(/\\\)/g, '$')
-        .replace(/\\\\/g, '\\');
 };
 
 export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
@@ -558,8 +544,14 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
                             <div className="max-w-3xl mx-auto py-4 sm:py-8">
                                 {messages.length === 0 && (
                                     <div className="flex flex-col items-center justify-center py-20 sm:py-32 text-center space-y-4 sm:space-y-6">
-                                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-accent flex items-center justify-center p-1 sm:p-1.5 border border-border shadow-xl hover:scale-105 transition-transform duration-500">
-                                            <img src="/images/ai-avatar.png" alt="AI Advisor" className="w-full h-full object-contain rounded-2xl" />
+                                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-accent flex items-center justify-center p-1 sm:p-1.5 border border-border shadow-xl hover:scale-105 transition-transform duration-500 relative overflow-hidden">
+                                            <Image
+                                                src="/images/ai-avatar.png"
+                                                alt="AI Advisor"
+                                                width={80}
+                                                height={80}
+                                                className="object-contain rounded-2xl"
+                                            />
                                         </div>
                                         <h2 className="text-3xl font-bold tracking-tight text-foreground">
                                             How can I help you?
@@ -568,56 +560,26 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
                                 )}
 
                                 {messages.map((m, idx) => (
-                                    <div key={idx} className={`group w-full border-b border-border/30 last:border-0 ${m.role === 'user' ? 'bg-muted/30' : ''}`}>
-                                        <div className={`max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-8 flex gap-3 sm:gap-4 md:gap-6 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                                            <div className="shrink-0">
-                                                {m.role === 'assistant' ? (
-                                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-white/10 shadow-lg p-0.5 bg-background">
-                                                        <img src="/images/ai-avatar.png" alt="AI Advisor" className="w-full h-full object-contain rounded-lg" />
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center border border-white/10 shadow-lg text-[10px] font-bold text-white uppercase text-center">
-                                                        {getInitials(dbUser?.name || firebaseUser?.displayName)}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className={`flex-1 min-w-0 space-y-2 ${m.role === 'user' ? 'text-right' : ''}`}>
-                                                <div className={`font-bold text-[12px] sm:text-[13px] text-muted-foreground flex items-center gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                                                    {m.role === 'assistant' ? 'AI Advisor' : 'You'}
-                                                </div>
-                                                <div className="prose dark:prose-invert prose-indigo max-w-none break-words text-[14px] sm:text-[15px] leading-relaxed text-foreground antialiased shadow-indigo-500/10">
-                                                    {m.image && (
-                                                        <motion.div
-                                                            initial={{ opacity: 0, scale: 0.95 }}
-                                                            animate={{ opacity: 1, scale: 1 }}
-                                                            className="mb-4 rounded-xl overflow-hidden border border-white/10 cursor-zoom-in group/img relative shadow-2xl inline-block"
-                                                            onClick={() => setLightboxImage(m.image!)}
-                                                        >
-                                                            <img
-                                                                src={m.image}
-                                                                alt="Uploaded"
-                                                                className="max-h-80 w-auto object-contain transition-transform group-hover/img:scale-[1.01]"
-                                                            />
-                                                        </motion.div>
-                                                    )}
-                                                    <ReactMarkdown
-                                                        remarkPlugins={[remarkMath]}
-                                                        rehypePlugins={[rehypeKatex]}
-                                                    >
-                                                        {formatMath(m.content)}
-                                                    </ReactMarkdown>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <ChatMessage
+                                        key={idx}
+                                        message={m}
+                                        user={(dbUser || firebaseUser || undefined) as any}
+                                        onImageClick={setLightboxImage}
+                                    />
                                 ))}
 
                                 {isLoading && (
                                     <div className="group w-full">
                                         <div className="max-w-3xl mx-auto px-4 py-8 flex gap-6">
                                             <div className="shrink-0 animate-pulse">
-                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-border p-0.5 bg-background shadow-sm">
-                                                    <img src="/images/ai-avatar.png" alt="AI Advisor" className="w-full h-full object-contain rounded-lg opacity-90" />
+                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-border p-0.5 bg-background shadow-sm relative overflow-hidden">
+                                                    <Image
+                                                        src="/images/ai-avatar.png"
+                                                        alt="AI Advisor"
+                                                        width={36}
+                                                        height={36}
+                                                        className="object-contain rounded-lg opacity-90"
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2 py-2">

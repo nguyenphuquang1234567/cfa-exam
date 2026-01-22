@@ -42,7 +42,12 @@ import { Settings, CreditCard } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useUserStore } from '@/store/user-store';
 import { ProfileModal } from '@/components/profile-modal';
-import { GlobalChatbot } from '@/components/chat/global-chatbot';
+import dynamic from 'next/dynamic';
+
+const GlobalChatbot = dynamic(
+  () => import('@/components/chat/global-chatbot').then((mod) => mod.GlobalChatbot),
+  { ssr: false }
+);
 import { FeedbackModal } from '@/components/feedback-modal';
 import { useUiStore } from '@/store/ui-store';
 
@@ -148,8 +153,8 @@ export function Navbar() {
               whileHover={{ scale: 1.05 }}
               className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500"
             >
-              <div className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shrink-0 rounded-full overflow-hidden">
-                <img src="/images/coin-icon.png" alt="Coins" className="w-full h-full object-cover scale-150" />
+              <div className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shrink-0 rounded-full overflow-hidden relative">
+                <Image src="/images/coin-icon.png" alt="Coins" fill className="object-cover scale-150" />
               </div>
               <span className="text-xs sm:text-sm font-bold">{dbUser?.coins || 0}</span>
             </motion.div>
@@ -166,8 +171,8 @@ export function Navbar() {
                 )}
                 title={chatLimit.type === 'PRO' ? "Daily AI Credits (60 per day)" : "Trial Credits (3 per day)"}
               >
-                <div className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shrink-0">
-                  <img src="/images/ai-avatar.png" alt="AI" className="w-full h-full object-contain" />
+                <div className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shrink-0 relative">
+                  <Image src="/images/ai-avatar.png" alt="AI" fill className="object-contain" />
                 </div>
                 <span className="text-xs sm:text-sm font-bold">{chatLimit.remaining}/{chatLimit.limit}</span>
               </motion.div>
@@ -182,8 +187,8 @@ export function Navbar() {
               className="rounded-full bg-indigo-500/10 border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-500/30 transition-all shadow-lg shadow-indigo-500/5 group"
               onClick={() => setIsChatOpen(true)}
             >
-              <div className="w-full h-full group-hover:scale-110 transition-transform overflow-hidden rounded-full">
-                <img src="/images/ai-avatar.png" alt="Chat" className="w-full h-full object-cover" />
+              <div className="w-full h-full group-hover:scale-110 transition-transform overflow-hidden rounded-full relative">
+                <Image src="/images/ai-avatar.png" alt="Chat" fill className="object-cover" />
               </div>
             </Button>
 
