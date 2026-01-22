@@ -135,8 +135,8 @@ export function Navbar() {
           {/* Right side */}
           <div className="flex items-center gap-3">
             {dbUser?.subscription === 'PRO' ? (
-              <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 cursor-default">
-                <Crown className="h-4 w-4 fill-cyan-400" />
+              <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 cursor-default">
+                <Crown className="h-4 w-4 fill-cyan-600 dark:fill-cyan-400" />
                 Pro Plan
               </Button>
             ) : (
