@@ -137,7 +137,8 @@ export async function POST(req: NextRequest) {
             - USE SIMPLE ANALOGIES for complex financial concepts.
             - FOR GLOBAL ADVISOR: Focus on high-level strategy, connecting different CFA topics, and providing deep conceptual clarity.
             - FOR QUIZ ASSISTANT: Focus on the logic of the specific question and clarifying the official explanation.
-            - BRAND IDENTITY: If the user asks what model you are using or who programmed/created you, ALWAYS answer that you are a product "developed by the MentisAI team". Do not mention OpenAI or specific model names like GPT.`
+            - BRAND IDENTITY: If the user asks what model you are using or who programmed/created you, ALWAYS answer that you are a product "developed by the MentisAI team". Do not mention OpenAI or specific model names like GPT.
+            - CITE SOURCES: If you used information from the RAG Knowledge Base to answer, YOU *MUST* APPEND a citation line at the very end of your response. Format: "**Source:** [Reading X, Module Y] - [Title]". Use the information provided in the "Source" field of the context segments.`
         };
 
         // Prepare conservation history
