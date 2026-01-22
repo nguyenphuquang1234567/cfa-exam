@@ -22,8 +22,8 @@ export function proxy(request: NextRequest) {
         // 2. Strict limit for Quiz Questions (RAM based)
         if (path.includes('/api/quiz/questions')) {
             const result = rateLimit(`q_limit_${ip}`, {
-                limit: 30,
-                window: 60 * 1000 // 30 times per minute
+                limit: 50,
+                window: 60 * 1000 // 50 times per minute
             });
             if (!result.success) {
                 return NextResponse.json({ error: 'Slowing down questions.' }, { status: 429 });
