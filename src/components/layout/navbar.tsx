@@ -42,7 +42,12 @@ import { Settings, CreditCard } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useUserStore } from '@/store/user-store';
 import { ProfileModal } from '@/components/profile-modal';
-import { GlobalChatbot } from '@/components/chat/global-chatbot';
+import dynamic from 'next/dynamic';
+
+const GlobalChatbot = dynamic(
+  () => import('@/components/chat/global-chatbot').then((mod) => mod.GlobalChatbot),
+  { ssr: false }
+);
 import { FeedbackModal } from '@/components/feedback-modal';
 import { useUiStore } from '@/store/ui-store';
 
