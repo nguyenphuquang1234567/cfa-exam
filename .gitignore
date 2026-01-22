@@ -44,3 +44,9 @@ next-env.d.ts
 
 # agent
 .agent/
+
+# local data
+/data
+/scripts/generate-question-embeddings.ts
+/scripts/generate_chunk_embeddings.ts
+/scripts/generate_chunk_embeddings_3.ts
