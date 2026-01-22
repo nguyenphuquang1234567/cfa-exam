@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -42,8 +43,14 @@ export const ChatMessage = memo(({ message, user, onImageClick }: ChatMessagePro
             <div className={`max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-8 flex gap-3 sm:gap-4 md:gap-6 ${isUser ? 'flex-row-reverse' : ''}`}>
                 <div className="shrink-0">
                     {!isUser ? (
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-white/10 shadow-lg p-0.5 bg-background">
-                            <img src="/images/ai-avatar.png" alt="AI Advisor" className="w-full h-full object-contain rounded-lg" />
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-white/10 shadow-lg p-0.5 bg-background relative overflow-hidden">
+                            <Image
+                                src="/images/ai-avatar.png"
+                                alt="AI Advisor"
+                                width={36}
+                                height={36}
+                                className="object-contain rounded-lg"
+                            />
                         </div>
                     ) : (
                         <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center border border-white/10 shadow-lg text-[10px] font-bold text-white uppercase text-center">

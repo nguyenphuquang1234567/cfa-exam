@@ -1,5 +1,5 @@
-'use client';
-
+import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Bot, User, Loader2, Sparkles, MessageCircle, X, Trash2, RotateCcw, ImageIcon, Paperclip, UploadCloud, ChevronDown, History, Settings, Search, Edit2, Check, Menu } from 'lucide-react';
@@ -544,8 +544,14 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
                             <div className="max-w-3xl mx-auto py-4 sm:py-8">
                                 {messages.length === 0 && (
                                     <div className="flex flex-col items-center justify-center py-20 sm:py-32 text-center space-y-4 sm:space-y-6">
-                                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-accent flex items-center justify-center p-1 sm:p-1.5 border border-border shadow-xl hover:scale-105 transition-transform duration-500">
-                                            <img src="/images/ai-avatar.png" alt="AI Advisor" className="w-full h-full object-contain rounded-2xl" />
+                                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-accent flex items-center justify-center p-1 sm:p-1.5 border border-border shadow-xl hover:scale-105 transition-transform duration-500 relative overflow-hidden">
+                                            <Image
+                                                src="/images/ai-avatar.png"
+                                                alt="AI Advisor"
+                                                width={80}
+                                                height={80}
+                                                className="object-contain rounded-2xl"
+                                            />
                                         </div>
                                         <h2 className="text-3xl font-bold tracking-tight text-foreground">
                                             How can I help you?
@@ -566,8 +572,14 @@ export function GlobalChatbot({ isOpen, onClose }: GlobalChatbotProps) {
                                     <div className="group w-full">
                                         <div className="max-w-3xl mx-auto px-4 py-8 flex gap-6">
                                             <div className="shrink-0 animate-pulse">
-                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-border p-0.5 bg-background shadow-sm">
-                                                    <img src="/images/ai-avatar.png" alt="AI Advisor" className="w-full h-full object-contain rounded-lg opacity-90" />
+                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-border p-0.5 bg-background shadow-sm relative overflow-hidden">
+                                                    <Image
+                                                        src="/images/ai-avatar.png"
+                                                        alt="AI Advisor"
+                                                        width={36}
+                                                        height={36}
+                                                        className="object-contain rounded-lg opacity-90"
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2 py-2">
