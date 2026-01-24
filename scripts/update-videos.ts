@@ -19,6 +19,16 @@ async function main() {
             moduleId: 'cmk8lpprq0005l1bx2v8sbx9t', // Module 1.3
             videoUrl: 'https://www.youtube.com/watch?v=kL7SjhDCMQM',
             title: 'Other Return Measures'
+        },
+        {
+            moduleId: 'cmk8lppuv0007l1bxihv2u0mb', // Module 2.1
+            videoUrl: 'https://www.youtube.com/watch?v=WusTmWUWtr0',
+            title: 'The Time Value of Money'
+        },
+        {
+            moduleId: 'cmk8lppxx0009l1bx9s60tgr3', // Module 2.2
+            videoUrl: 'https://www.youtube.com/watch?v=JXwNxJIGXq8',
+            title: 'Implied Returns and Cash Flow Additivity'
         }
     ];
 
@@ -26,12 +36,12 @@ async function main() {
 
     for (const item of videoData) {
         try {
-            const existing = await prisma.lessonContent.findUnique({ where: { moduleId: item.moduleId } });
+            const existing = await (prisma.lessonContent as any).findUnique({ where: { moduleId: item.moduleId } });
             const newContent = existing?.content.includes('Video Lecture:')
                 ? existing.content
                 : `${existing?.content || ''}\n\n---\n**Video Lecture:** ${item.videoUrl}`;
 
-            await prisma.lessonContent.upsert({
+            await (prisma.lessonContent as any).upsert({
                 where: { moduleId: item.moduleId },
                 update: {
                     videoUrl: item.videoUrl,
@@ -45,7 +55,7 @@ async function main() {
             });
             console.log(`✅ Upserted video/content for module ${item.moduleId}`);
         } catch (error) {
-            console.error(`❌ Failed to process module ${item.moduleId}:`, error.message);
+            console.error(`❌ Failed to process module ${item.moduleId}:`, (error as any).message);
         }
     }
 
@@ -55,7 +65,7 @@ async function main() {
 main()
     .catch((e) => {
         console.error(e);
-        process.exit(1);
+        process.exit(1)
     })
     .finally(async () => {
         await prisma.$disconnect();
