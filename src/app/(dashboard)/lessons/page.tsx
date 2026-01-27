@@ -232,23 +232,44 @@ function LessonsContent() {
                                                 <Badge variant="outline" className="font-bold border-indigo-500 text-indigo-500 px-3 py-1 bg-indigo-500/5">
                                                     {book.level?.replace('_', ' ') || 'CFA LEVEL'}
                                                 </Badge>
-                                                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider flex items-center gap-1">
-                                                    <BookOpen className="h-3 w-3" />
-                                                    {book.readings.length} Readings
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider flex items-center gap-1">
+                                                        <BookOpen className="h-3 w-3" />
+                                                        {book.readings.length} Readings
+                                                    </span>
+                                                </div>
                                             </div>
                                             <h3 className="text-xl font-bold text-foreground leading-tight group-hover:text-indigo-500 transition-colors">
                                                 {book.title}
                                             </h3>
                                         </div>
 
-                                        <p className="text-muted-foreground text-sm line-clamp-3 min-h-[3.75rem]">
+                                        <p className="text-muted-foreground text-sm line-clamp-2 min-h-[2.5rem]">
                                             {book.description || 'Complete theory and curriculum materials for this level.'}
                                         </p>
 
+                                        {/* Progress Bar Section */}
+                                        {!book.isLocked && (
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                                                    <span className="text-muted-foreground">Reading Progress</span>
+                                                    <span className="text-indigo-500">
+                                                        {book.readings.filter(r => r.modules.length > 0 && r.modules.every(m => m.isCompleted)).length} / {book.readings.length} Done
+                                                    </span>
+                                                </div>
+                                                <Progress
+                                                    value={book.readings.length > 0
+                                                        ? (book.readings.filter(r => r.modules.length > 0 && r.modules.every(m => m.isCompleted)).length / book.readings.length) * 100
+                                                        : 0
+                                                    }
+                                                    className="h-1.5 bg-muted shadow-inner rounded-full"
+                                                />
+                                            </div>
+                                        )}
+
                                         <Button
                                             className={cn(
-                                                "w-full h-12 text-lg font-bold shadow-lg transition-all rounded-xl",
+                                                "w-full h-12 text-lg font-bold shadow-lg transition-all rounded-xl mt-2",
                                                 book.isLocked
                                                     ? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
                                                     : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20"
