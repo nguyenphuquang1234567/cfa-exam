@@ -35,7 +35,7 @@ export function Starfield({ isDark = true }: StarfieldProps) {
             canvas.width = width;
             canvas.height = height;
 
-            stars = Array.from({ length: 800 }, () => ({
+            stars = Array.from({ length: 200 }, () => ({
                 x: Math.random() * width - width / 2,
                 y: Math.random() * height - height / 2,
                 z: Math.random() * width,
