@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     try {
         // --- Rate Limiting ---
         const ip = getIP(req);
-        const { success, remaining, reset } = rateLimit(ip, {
+        const { success, remaining, reset } = await rateLimit(`sync_${ip}`, {
             limit: 50, // 50 requests
             window: 60 * 1000 // per 1 minute
         });
@@ -19,9 +19,9 @@ export async function POST(req: Request) {
                 {
                     status: 429,
                     headers: {
-                        'X-RateLimit-Limit': '20',
-                        'X-RateLimit-Remaining': '0',
-                        'X-RateLimit-Reset': reset.toString()
+                        'X-RateLimit-Limit': '50',
+                        'X-RateLimit-Remaining': remaining?.toString() || '0',
+                        'X-RateLimit-Reset': reset?.toString() || Date.now().toString()
                     }
                 }
             );
@@ -177,7 +177,16 @@ export async function POST(req: Request) {
             hasRedeemedReferral: user.hasRedeemedReferral,
         };
 
-        return NextResponse.json({ ...safeUser, referralResult });
+        return NextResponse.json(
+            { ...safeUser, referralResult },
+            {
+                headers: {
+                    'X-RateLimit-Limit': '50',
+                    'X-RateLimit-Remaining': remaining?.toString() || '0',
+                    'X-RateLimit-Reset': reset?.toString() || Date.now().toString()
+                }
+            }
+        );
     } catch (error) {
         console.error('Error syncing user:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

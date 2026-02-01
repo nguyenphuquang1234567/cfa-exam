@@ -15,7 +15,7 @@ import { ChatMessage } from './chat-message';
 interface GlobalChatbotProps {
     isOpen: boolean;
     onClose: () => void;
-    chatLimit?: { remaining: number; limit: number; type: string } | null;
+    chatLimit?: { remaining: number; limit: number; type: string; resetTime?: number } | null;
 }
 
 const getInitials = (name?: string | null) => {
@@ -517,10 +517,13 @@ export function GlobalChatbot({ isOpen, onClose, chatLimit }: GlobalChatbotProps
                                     <ChevronDown className="w-4 h-4 text-muted-foreground" />
                                 </div>
                                 {chatLimit && (
-                                    <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${chatLimit.remaining > 0
+                                    <div
+                                        title={chatLimit.resetTime ? `Hồi lượt vào: ${new Date(chatLimit.resetTime).toLocaleString()}` : undefined}
+                                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold border cursor-help ${chatLimit.remaining > 0
                                             ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-400"
                                             : "bg-destructive/10 border-destructive/20 text-destructive"
-                                        }`}>
+                                            }`}
+                                    >
                                         {chatLimit.remaining}/{chatLimit.limit}
                                     </div>
                                 )}

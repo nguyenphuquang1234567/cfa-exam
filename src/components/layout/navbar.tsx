@@ -85,13 +85,13 @@ export function Navbar() {
   };
 
   const [imgError, setImgError] = useState(false);
-  const [chatLimit, setChatLimit] = useState<{ remaining: number, limit: number, type: string } | null>(null);
+  const [chatLimit, setChatLimit] = useState<{ remaining: number, limit: number, type: string, resetTime?: number } | null>(null);
 
   const fetchChatLimit = async () => {
     if (!user) return;
     try {
       const token = await user.getIdToken();
-      const res = await fetch('/api/quiz/chat/limit', {
+      const res = await fetch(`/api/quiz/chat/limit?t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${token}` },
         cache: 'no-store'
       });
