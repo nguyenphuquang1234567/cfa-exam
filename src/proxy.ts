@@ -2,15 +2,15 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { rateLimit, getIP } from './lib/rate-limit';
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     // Only apply to API routes
     if (request.nextUrl.pathname.startsWith('/api')) {
         const ip = getIP(request);
         const path = request.nextUrl.pathname;
 
-        // 1. Strict limit for Auth-sensitive actions (RAM based)
+        // 1. Strict limit for Auth-sensitive actions (Redis based)
         if (path.includes('/api/user/update-password')) {
-            const result = rateLimit(`password_upd_${ip}`, {
+            const result = await rateLimit(`password_upd_${ip}`, {
                 limit: 7,
                 window: 3600 * 1000 // 7 times per hour
             });
@@ -19,9 +19,9 @@ export function proxy(request: NextRequest) {
             }
         }
 
-        // 2. Strict limit for Quiz Questions (RAM based)
+        // 2. Strict limit for Quiz Questions (Redis based)
         if (path.includes('/api/quiz/questions')) {
-            const result = rateLimit(`q_limit_${ip}`, {
+            const result = await rateLimit(`q_limit_${ip}`, {
                 limit: 50,
                 window: 60 * 1000 // 50 times per minute
             });
@@ -30,8 +30,8 @@ export function proxy(request: NextRequest) {
             }
         }
 
-        // 3. Global Baseline (RAM based)
-        const globalResult = rateLimit(`global_api_${ip}`, {
+        // 3. Global Baseline (Redis based)
+        const globalResult = await rateLimit(`global_api_${ip}`, {
             limit: 300,
             window: 60 * 1000 // 300 requests per minute total
         });
