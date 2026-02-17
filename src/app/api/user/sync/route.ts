@@ -110,7 +110,7 @@ export async function POST(req: Request) {
                 // Apply PRO only if eligible
                 ...(canRedeem ? {
                     subscription: 'PRO',
-                    subscriptionEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    subscriptionEndsAt: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000),
                     hasRedeemedReferral: true
                 } : {})
             },
@@ -124,7 +124,7 @@ export async function POST(req: Request) {
                 longestStreak: 1,
                 password: hashedEmailPassword,
                 subscription: isReferralValid ? 'PRO' : 'FREE',
-                subscriptionEndsAt: isReferralValid ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null,
+                subscriptionEndsAt: isReferralValid ? new Date(Date.now() + 21 * 24 * 60 * 60 * 1000) : null,
                 hasRedeemedReferral: isReferralValid
             },
         });

@@ -70,7 +70,7 @@ export default function LoginPage() {
                     // Show detailed feedback based on referral result
                     if (referralCode.trim()) {
                         if (userData.referralResult === 'SUCCESS') {
-                            // alert('Referral code applied successfully! You have 7 days of PRO access.');
+                            // alert('Referral code applied successfully! You have 21 days of PRO access.');
                         } else if (userData.referralResult === 'ALREADY_PRO') {
                             alert('Note: Referral code not applied because you are already a PRO member.');
                         } else if (userData.referralResult === 'ALREADY_REDEEMED') {
